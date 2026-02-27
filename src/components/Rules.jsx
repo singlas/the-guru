@@ -12,7 +12,7 @@ export function Rules({ onDone }) {
       body: (
         <div className="space-y-6">
           <p className="text-[#F5EFE0]/80 leading-relaxed">
-            <span className="font-display text-xl text-[#E8D5A3]">The Guru</span> is a card game
+            <span className="font-display text-xl text-[#E8D5A3]">GitaVerse</span> is a card game
             where ancient wisdom meets modern life. Players take turns as{" "}
             <span className="text-[#C9A962] font-medium">Seekers</span> presenting real-world
             dilemmas while{" "}
