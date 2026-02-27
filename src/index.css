@@ -188,3 +188,17 @@ button:focus-visible {
 .animate-float {
   animation: float 6s ease-in-out infinite;
 }
+
+/* Subtle pulse for selectable cards */
+@keyframes subtle-pulse {
+  0%, 100% {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  }
+  50% {
+    box-shadow: 0 4px 20px rgba(201, 169, 98, 0.25), 0 0 0 1px rgba(201, 169, 98, 0.15);
+  }
+}
+
+.animate-subtle-pulse {
+  animation: subtle-pulse 2s ease-in-out infinite;
+}

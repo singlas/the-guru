@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { markRulesSeen } from "../utils/helpers";
 import { Button } from "./Button";
-import { SacredLotus, SacredDivider } from "./Patterns";
 
 export function Rules({ onDone }) {
   const [page, setPage] = useState(0);
@@ -149,9 +148,19 @@ export function Rules({ onDone }) {
     >
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto p-6 pb-0">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="font-display text-2xl text-[#C9A962]">{pages[page].title}</h2>
+        {/* Header with back button */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            {page > 0 && (
+              <button
+                onClick={() => setPage(page - 1)}
+                className="text-[#C9A962]/60 hover:text-[#C9A962] transition-colors"
+              >
+                ←
+              </button>
+            )}
+            <h2 className="font-display text-2xl text-[#C9A962]">{pages[page].title}</h2>
+          </div>
           <div className="flex gap-2">
             {pages.map((_, i) => (
               <div
@@ -168,30 +177,22 @@ export function Rules({ onDone }) {
         <div>{pages[page].body}</div>
       </div>
 
-      {/* Sticky footer */}
+      {/* Sticky footer - single primary button */}
       <div className="shrink-0 p-6 bg-gradient-to-t from-[#1A1412] via-[#1A1412] to-transparent">
-        <div className="flex gap-3">
-          {page > 0 && (
-            <Button variant="secondary" onClick={() => setPage(page - 1)} className="flex-1">
-              Back
-            </Button>
-          )}
-          {page < pages.length - 1 ? (
-            <Button onClick={() => setPage(page + 1)} className="flex-1">
-              Continue
-            </Button>
-          ) : (
-            <Button
-              onClick={() => {
-                markRulesSeen();
-                onDone();
-              }}
-              className="flex-1"
-            >
-              Begin the Journey
-            </Button>
-          )}
-        </div>
+        {page < pages.length - 1 ? (
+          <Button onClick={() => setPage(page + 1)}>
+            Continue
+          </Button>
+        ) : (
+          <Button
+            onClick={() => {
+              markRulesSeen();
+              onDone();
+            }}
+          >
+            Begin the Journey
+          </Button>
+        )}
       </div>
     </div>
   );

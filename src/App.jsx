@@ -3,9 +3,10 @@ import { SCENARIOS } from "./data/scenarios";
 import { WISDOM } from "./data/wisdom";
 import { CATEGORIES, CATEGORY_NAMES } from "./data/categories";
 import { shuffle, draw, getGurus, loadHistory, saveHistory, hasSeenRules } from "./utils/helpers";
-import { GeometricPattern, WisdomPattern, SacredLotus, SacredDivider } from "./components/Patterns";
+import { SacredLotus, SacredDivider } from "./components/Patterns";
 import { Button, IconButton } from "./components/Button";
 import { Rules } from "./components/Rules";
+import { ScenarioCard, WisdomCard } from "./components/FlipCard";
 
 export default function App() {
   const [screen, setScreen] = useState(() => (hasSeenRules() ? "home" : "rules"));
@@ -157,7 +158,7 @@ export default function App() {
           <SacredDivider width={180} className="my-6 opacity-60" />
 
           <p className="text-[#F5EFE0]/60 text-center text-sm leading-relaxed max-w-xs">
-            Where ancient wisdom meets modern dilemmas. A journey of reflection with family and friends.
+            Bring the Gita to your living room — one round, one verse, one conversation at a time.
           </p>
         </div>
 
@@ -187,7 +188,7 @@ export default function App() {
             )}
           </div>
 
-          <p className="text-[#F5EFE0]/30 text-xs mt-4">3–8 Seekers</p>
+          <p className="text-[#F5EFE0]/30 text-xs mt-4">A satsang for 3–8 Seekers</p>
         </div>
       </div>
     );
@@ -362,11 +363,20 @@ export default function App() {
 
   // ─── SETUP ───
   if (screen === "setup") {
+    const GITA_CHARACTERS = [
+      "Arjuna", "Krishna", "Draupadi", "Bhishma", "Vidura", "Yudhishthira",
+      "Gandhari", "Kunti", "Karna", "Sanjaya", "Nakula", "Sahadeva"
+    ];
+
     const add = () => {
       if (names.length < 8) setNames([...names, ""]);
     };
     const rm = (i) => {
       if (names.length > 3) setNames(names.filter((_, j) => j !== i));
+    };
+    const autoFill = () => {
+      const shuffled = [...GITA_CHARACTERS].sort(() => Math.random() - 0.5);
+      setNames(shuffled.slice(0, names.length));
     };
     const ok = names.filter((n) => n.trim()).length >= 3;
 
@@ -384,7 +394,15 @@ export default function App() {
             ← Return
           </button>
 
-          <h2 className="font-display text-2xl text-[#C9A962] mb-2">The Seekers</h2>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="font-display text-2xl text-[#C9A962]">The Seekers</h2>
+            <button
+              onClick={autoFill}
+              className="text-xs px-3 py-1.5 rounded-full border border-[#C9A962]/30 text-[#C9A962]/70 hover:text-[#C9A962] hover:border-[#C9A962]/50 transition-colors"
+            >
+              ✦ Gita Names
+            </button>
+          </div>
           <p className="text-[#F5EFE0]/50 text-sm mb-6">Gather 3 to 8 souls for this journey</p>
 
           <div className="space-y-3 mb-5">
@@ -656,8 +674,8 @@ export default function App() {
           className="h-full flex flex-col"
           style={{ background: "linear-gradient(180deg, #1A1412 0%, #2D1F1A 50%, #1A1412 100%)" }}
         >
-          <div className="flex-1 overflow-y-auto p-6">
-            <div className="flex justify-between items-center mb-6">
+          <div className="flex-1 overflow-y-auto p-5">
+            <div className="flex justify-between items-center mb-4">
               <span className="text-[#F5EFE0]/40 text-sm">
                 Round {rNum} of {mr}
               </span>
@@ -666,39 +684,20 @@ export default function App() {
               </span>
             </div>
 
-            <div className="text-center mb-6">
+            {/* Phase title */}
+            <div className="text-center mb-4">
+              <h2 className="font-display text-xl text-[#C9A962]">The Seeker Speaks</h2>
+              <p className="text-[#F5EFE0]/40 text-xs mt-1">Read the dilemma aloud to the group</p>
+            </div>
+
+            <div className="text-center mb-4">
               <p className="text-[#F5EFE0]/50 text-sm">The Seeker</p>
               <p className="font-display text-3xl text-[#C9A962] mt-1">{seeker.name}</p>
             </div>
 
-            {/* Scenario Card */}
-            <div
-              className="relative rounded-2xl p-6 mb-6 overflow-hidden"
-              style={{
-                background: `linear-gradient(135deg, ${cfg.c}15 0%, ${cfg.c}08 100%)`,
-                border: `1px solid ${cfg.c}30`,
-              }}
-            >
-              <GeometricPattern pattern={cfg.p} color={cfg.c} opacity={0.15} size={90} />
-              <div className="relative z-10">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-lg">{cfg.i}</span>
-                  <span className="text-xs font-medium tracking-wide" style={{ color: cfg.c }}>
-                    {curS.cat}
-                  </span>
-                  {mode === "advanced" && (
-                    <span
-                      className="ml-auto px-2.5 py-1 rounded-full text-xs font-medium"
-                      style={{ background: `${cfg.c}30`, color: cfg.c }}
-                    >
-                      {curS.score} {curS.score === 1 ? "point" : "points"}
-                    </span>
-                  )}
-                </div>
-                <p className="font-display text-xl text-[#F5EFE0] leading-relaxed">
-                  "{curS.text}"
-                </p>
-              </div>
+            {/* Scenario Card - New Game Card Style */}
+            <div className="mb-4">
+              <ScenarioCard scenario={curS} category={cfg} mode={mode} />
             </div>
 
             <p className="text-center text-[#C9A962]/50 text-sm italic mb-4 px-4">
@@ -739,7 +738,13 @@ export default function App() {
           className="h-full flex flex-col items-center justify-center p-8"
           style={{ background: "linear-gradient(180deg, #1A1412 0%, #2D1F1A 50%, #1A1412 100%)" }}
         >
-          <div className="animate-breathe mb-8">
+          {/* Phase title */}
+          <div className="text-center mb-6">
+            <h2 className="font-display text-xl text-[#C9A962]">Gurus Contemplate</h2>
+            <p className="text-[#F5EFE0]/40 text-xs mt-1">Pass the phone privately to each Guru</p>
+          </div>
+
+          <div className="animate-breathe mb-6">
             <SacredLotus size={100} />
           </div>
 
@@ -766,49 +771,39 @@ export default function App() {
           className="h-full flex flex-col"
           style={{ background: "linear-gradient(180deg, #1A1412 0%, #2D1F1A 50%, #1A1412 100%)" }}
         >
-          <div className="flex-1 overflow-y-auto p-6">
-            {/* Header */}
-            <div className="text-center mb-4">
-              <p className="text-[#F5EFE0]/50 text-sm">Guru</p>
-              <p className="font-display text-2xl text-[#C9A962]">{guru.name}</p>
+          <div className="flex-1 overflow-y-auto p-5">
+            {/* Phase title */}
+            <div className="text-center mb-3">
+              <h2 className="font-display text-xl text-[#C9A962]">Gurus Contemplate</h2>
+              <p className="text-[#F5EFE0]/40 text-xs mt-1">Select one wisdom card from your hand</p>
             </div>
 
-            {/* Scenario reminder */}
-            <div
-              className="rounded-xl p-4 mb-4"
-              style={{ background: `${cfg.c}10`, border: `1px solid ${cfg.c}20` }}
-            >
-              <p className="text-xs mb-1" style={{ color: cfg.c }}>
-                {cfg.i} The Seeker asks:
-              </p>
-              <p className="text-[#F5EFE0]/80 text-sm">"{curS.text}"</p>
+            {/* Header with role */}
+            <div className="text-center mb-4">
+              <p className="text-[#C9A962]/60 text-xs tracking-widest uppercase">You are the Guru</p>
+              <p className="font-display text-3xl text-[#C9A962] mt-1">{guru.name}</p>
             </div>
 
-            {/* Instruction */}
-            <div className="text-center mb-4">
-              <p className="text-[#C9A962] text-sm font-medium">👆 Tap a wisdom card to select</p>
-              <p className="text-[#F5EFE0]/40 text-xs mt-1">Choose the verse that best answers this dilemma</p>
+            {/* Scenario reminder - compact card */}
+            <div className="mb-4">
+              <ScenarioCard scenario={curS} category={cfg} mode={mode} isCompact={true} />
+            </div>
+
+            {/* Clear instruction */}
+            <div className="text-center mb-4 py-2 rounded-lg bg-[#C9A962]/10 border border-[#C9A962]/20">
+              <p className="text-[#E8D5A3] text-sm font-medium">Tap a wisdom card to play it</p>
             </div>
 
             {/* Wisdom cards */}
             <div className="space-y-3">
               {hand.map((card, i) => (
-                <button
+                <WisdomCard
                   key={card.id}
+                  wisdom={card}
+                  isSelectable={true}
+                  isCompact={true}
                   onClick={() => selectCard(i)}
-                  className="w-full text-left relative rounded-2xl p-4 overflow-hidden border-2 border-[#C9A962]/20 active:scale-[0.98] active:border-[#C9A962] transition-all hover:border-[#C9A962]/50"
-                  style={{
-                    background: "linear-gradient(135deg, #2D1F1A 0%, #1A1412 100%)",
-                  }}
-                >
-                  <WisdomPattern size={45} />
-                  <div className="relative z-10 pl-11">
-                    <p className="text-[#C9A962] text-xs font-medium mb-1.5">
-                      BG {card.verse}
-                    </p>
-                    <p className="text-[#E8D5A3] text-sm leading-relaxed">"{card.text}"</p>
-                  </div>
-                </button>
+                />
               ))}
             </div>
           </div>
@@ -826,46 +821,39 @@ export default function App() {
           className="h-full flex flex-col"
           style={{ background: "linear-gradient(180deg, #1A1412 0%, #2D1F1A 50%, #1A1412 100%)" }}
         >
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto p-5">
+            {/* Phase title */}
+            <div className="text-center mb-3">
+              <h2 className="font-display text-xl text-[#C9A962]">Wisdom Revealed</h2>
+              <p className="text-[#F5EFE0]/40 text-xs mt-1">Each Guru shares their chosen verse</p>
+            </div>
+
+            {/* Progress indicator */}
             <div className="flex justify-between items-center mb-4">
-              <span className="text-[#F5EFE0]/40 text-sm">Reflection</span>
+              <span className="text-[#C9A962]/60 text-xs tracking-widest uppercase">Sharing Wisdom</span>
               <span className="text-[#F5EFE0]/40 text-sm">
                 {rIdx + 1} of {gOrder.current.length}
               </span>
             </div>
 
-            {/* Scenario reminder */}
-            <div
-              className="rounded-xl p-4 mb-6"
-              style={{ background: `${cfg.c}10`, border: `1px solid ${cfg.c}20` }}
-            >
-              <p className="text-[#F5EFE0]/70 text-sm">"{curS.text}"</p>
+            {/* Scenario reminder - compact */}
+            <div className="mb-4">
+              <ScenarioCard scenario={curS} category={cfg} mode={mode} isCompact={true} />
             </div>
 
-            <div className="flex flex-col items-center">
-              <p className="text-[#F5EFE0]/50 text-sm mb-2">Guru</p>
-              <p className="font-display text-3xl text-[#C9A962] mb-6">{rg.name}</p>
+            {/* Guru name */}
+            <div className="text-center mb-4">
+              <p className="font-display text-2xl text-[#C9A962]">{rg.name}</p>
+              <p className="text-[#F5EFE0]/40 text-xs mt-1">shares their wisdom</p>
+            </div>
 
-              {/* Wisdom card display */}
-              <div
-                className="w-full relative rounded-2xl p-5 overflow-hidden border border-[#C9A962]/25"
-                style={{
-                  background: "linear-gradient(135deg, #2D1F1A 0%, #1A1412 100%)",
-                }}
-              >
-                <WisdomPattern size={60} />
-                <div className="relative z-10 pl-12">
-                  <p className="text-[#C9A962] text-sm font-medium mb-2">
-                    BG {rc.verse}
-                  </p>
-                  <p className="font-display text-lg text-[#E8D5A3] leading-relaxed">
-                    "{rc.text}"
-                  </p>
-                </div>
-              </div>
+            {/* Wisdom card display */}
+            <WisdomCard wisdom={rc} isSelectable={false} />
 
-              <p className="text-[#C9A962]/40 text-sm italic mt-6 text-center px-4">
-                {rg.name}, explain how this wisdom answers the dilemma
+            {/* Instruction for the guru */}
+            <div className="mt-4 py-3 px-4 rounded-lg bg-[#6B2D3C]/20 border border-[#C9A962]/15">
+              <p className="text-[#E8D5A3]/80 text-sm text-center">
+                <span className="text-[#C9A962]">{rg.name}</span>, explain how this wisdom speaks to the dilemma
               </p>
             </div>
           </div>
@@ -878,7 +866,7 @@ export default function App() {
                 else setPhase("seekerPick");
               }}
             >
-              {rIdx < gOrder.current.length - 1 ? "Next Guru" : "Seeker's Choice"}
+              {rIdx < gOrder.current.length - 1 ? "Hear Next Guru" : "Pass to Seeker"}
             </Button>
           </div>
         </div>
@@ -892,31 +880,31 @@ export default function App() {
           className="h-full flex flex-col"
           style={{ background: "linear-gradient(180deg, #1A1412 0%, #2D1F1A 50%, #1A1412 100%)" }}
         >
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto p-5">
+            {/* Phase title */}
+            <div className="text-center mb-3">
+              <h2 className="font-display text-xl text-[#C9A962]">Seeker's Choice</h2>
+              <p className="text-[#F5EFE0]/40 text-xs mt-1">Award the round to the wisest Guru</p>
+            </div>
+
+            {/* Header */}
             <div className="text-center mb-4">
-              <p className="text-[#F5EFE0]/50 text-sm">Seeker</p>
-              <p className="font-display text-2xl text-[#C9A962] mt-1">{seeker.name}</p>
+              <p className="text-[#C9A962]/60 text-xs tracking-widest uppercase">You are the Seeker</p>
+              <p className="font-display text-3xl text-[#C9A962] mt-1">{seeker.name}</p>
             </div>
 
-            {/* Scenario */}
-            <div
-              className="rounded-xl p-4 mb-4"
-              style={{ background: `${cfg.c}10`, border: `1px solid ${cfg.c}20` }}
-            >
-              <p className="text-[#F5EFE0]/70 text-sm">"{curS.text}"</p>
-              {mode === "advanced" && (
-                <p className="text-xs mt-2" style={{ color: cfg.c }}>
-                  Worth {curS.score} {curS.score === 1 ? "point" : "points"}
-                </p>
-              )}
+            {/* Scenario reminder - compact */}
+            <div className="mb-4">
+              <ScenarioCard scenario={curS} category={cfg} mode={mode} isCompact={true} />
             </div>
 
-            {/* Instruction */}
-            <p className="text-center text-[#C9A962] text-sm font-medium mb-4">
-              👆 Tap to award the round
-            </p>
+            {/* Clear instruction */}
+            <div className="text-center mb-4 py-2 rounded-lg bg-[#C9A962]/10 border border-[#C9A962]/20">
+              <p className="text-[#E8D5A3] text-sm font-medium">Whose wisdom resonated most?</p>
+              <p className="text-[#F5EFE0]/50 text-xs mt-1">Tap to award the round</p>
+            </div>
 
-            {/* Guru options */}
+            {/* Guru options with their wisdom cards */}
             <div className="space-y-3">
               {gOrder.current.map((gi) => {
                 const g = players[gi];
@@ -925,19 +913,17 @@ export default function App() {
                   <button
                     key={gi}
                     onClick={() => pickWinner(gi)}
-                    className="w-full text-left rounded-2xl p-4 border-2 border-[#C9A962]/15 active:scale-[0.98] active:border-[#C9A962] transition-all hover:border-[#C9A962]/40"
+                    className="w-full text-left rounded-xl p-3 border-2 border-[#C9A962]/15 active:scale-[0.98] active:border-[#C9A962] transition-all hover:border-[#C9A962]/40"
                     style={{ background: "linear-gradient(135deg, #2D1F1A 0%, #1A1412 100%)" }}
                   >
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-display bg-[#6B2D3C]/40 text-[#C9A962] border border-[#C9A962]/30 shrink-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-display bg-[#6B2D3C]/40 text-[#C9A962] border border-[#C9A962]/30 shrink-0">
                         {g.name[0]}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[#C9A962] font-medium">{g.name}</p>
-                        <p className="text-[#C9A962]/50 text-xs mb-1">BG {card.verse}</p>
-                        <p className="text-[#E8D5A3]/80 text-sm leading-relaxed">"{card.text}"</p>
-                      </div>
+                      <p className="text-[#C9A962] font-medium">{g.name}</p>
+                      <span className="ml-auto text-[#C9A962]/50 text-xs">{card.verse}</span>
                     </div>
+                    <p className="text-[#E8D5A3]/80 text-sm leading-relaxed pl-10">"{card.text}"</p>
                   </button>
                 );
               })}
