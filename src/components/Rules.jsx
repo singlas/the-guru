@@ -42,32 +42,37 @@ export function Rules({ onDone }) {
         <div className="space-y-5">
           {[
             {
-              num: "१",
+              num: "1",
+              numHi: "१",
               title: "The Seeker Speaks",
               desc: "Draw a scenario card and read your dilemma aloud to the group.",
             },
             {
-              num: "२",
+              num: "2",
+              numHi: "२",
               title: "Gurus Contemplate",
               desc: "Pass the phone to each Guru privately. They select one wisdom card from their hand.",
             },
             {
-              num: "३",
+              num: "3",
+              numHi: "३",
               title: "Wisdom Revealed",
               desc: "Each Guru shares their chosen verse and explains how it addresses the dilemma.",
             },
             {
-              num: "४",
+              num: "4",
+              numHi: "४",
               title: "Seeker's Choice",
               desc: "Award the round to the Guru whose wisdom resonated most deeply.",
             },
-          ].map(({ num, title, desc }, i) => (
+          ].map(({ num, numHi, title, desc }, i) => (
             <div
               key={i}
               className="flex gap-4 items-start p-4 rounded-xl bg-[#2D1F1A]/30 border border-[#C9A962]/10"
             >
-              <div className="w-10 h-10 rounded-full bg-[#6B2D3C]/40 border border-[#C9A962]/30 flex items-center justify-center text-[#C9A962] font-display text-lg shrink-0">
-                {num}
+              <div className="w-10 h-10 rounded-full bg-[#6B2D3C]/40 border border-[#C9A962]/30 flex items-center justify-center shrink-0 relative">
+                <span className="text-[#C9A962] font-bold text-sm">{num}</span>
+                <span className="absolute -bottom-0.5 -right-0.5 text-[#C9A962]/40 text-[10px]">{numHi}</span>
               </div>
               <div>
                 <p className="text-[#E8D5A3] font-medium mb-1">{title}</p>

@@ -21,8 +21,8 @@ export const CATEGORIES = {
     hi: "नैतिक निर्णय"
   },
   "Relationship Situations": {
-    c: "#D97706", // Warm amber
-    bg: "#FEF3C7",
+    c: "#EAB308", // Yellow
+    bg: "#FEF9C3",
     i: "◇",
     p: "diamonds",
     hi: "रिश्तों की स्थितियां"

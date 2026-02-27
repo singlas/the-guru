@@ -146,171 +146,150 @@ const CARD_SIZES = {
 };
 
 // ============================================================
-// SCENARIO CARD
+// SCENARIO CARD - Dark elegant theme with center-only flip
 // ============================================================
 export function ScenarioCard({
   scenario,
   category,
   mode = "simple",
-  size = "full" // "full" | "hand" | "review"
+  size = "full", // "full" | "hand" | "review"
+  // Synchronized flip props
+  syncFlipped = null, // null = uncontrolled, true/false = controlled
+  onFlipChange = null, // callback when flip state changes (for sync mode)
+  showFlipHint = false, // Show "Tap to show Hindi" hint in footer
 }) {
-  const [isFlipped, setIsFlipped] = useState(false);
+  const [internalFlipped, setInternalFlipped] = useState(false);
+
+  // Use controlled or uncontrolled flip state
+  const showHindi = syncFlipped !== null ? syncFlipped : internalFlipped;
+  const toggleFlip = () => {
+    const newVal = !showHindi;
+    if (syncFlipped !== null && onFlipChange) {
+      onFlipChange(newVal);
+    } else {
+      setInternalFlipped(newVal);
+    }
+  };
+
   const IconComponent = CategoryIcons[scenario.cat] || CategoryIcons["Personal Dilemmas"];
   const sizeConfig = CARD_SIZES[size];
-  const borderColor = category.c || "#C9A962";
-
-  const cardBase = `
-    relative rounded-2xl overflow-hidden max-w-sm mx-auto w-full
-    ${sizeConfig.minHeight}
-  `;
-
-  // Card front (English)
-  const frontContent = (
-    <div
-      className={cardBase}
-      style={{
-        background: `linear-gradient(180deg, #FDFBF7 0%, #F5EFE0 100%)`,
-        border: `3px solid ${borderColor}20`,
-        boxShadow: `0 4px 20px rgba(0,0,0,0.1)`,
-      }}
-    >
-      {/* Top strip: category + score */}
-      <div
-        className={`flex items-center justify-between ${sizeConfig.headerPadding} border-b`}
-        style={{ borderColor: `${borderColor}20`, background: `${borderColor}08` }}
-      >
-        <span
-          className="text-xs font-semibold uppercase tracking-wide"
-          style={{ color: borderColor }}
-        >
-          {scenario.cat}
-        </span>
-        {mode === "advanced" && <PointsBadge points={scenario.score} />}
-      </div>
-
-      {/* Body: icon + text */}
-      <div className={`flex flex-col items-center justify-center ${sizeConfig.padding}`}>
-        <div className={sizeConfig.iconSize} style={{ color: borderColor }}>
-          <IconComponent />
-        </div>
-        <p
-          className={`text-center leading-relaxed text-[#2D1F1A] mt-4 ${sizeConfig.textSize}`}
-          style={{ fontFamily: 'Georgia, serif' }}
-        >
-          {scenario.text}
-        </p>
-      </div>
-
-      {/* Bottom strip: metadata + flip icon */}
-      <div
-        className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-4 py-2 border-t"
-        style={{ borderColor: `${borderColor}15`, background: `${borderColor}05` }}
-      >
-        <span
-          className="text-[10px] font-medium"
-          style={{ color: `${borderColor}90` }}
-        >
-          {category.hi || scenario.cat}
-        </span>
-        <button
-          className="p-1 rounded hover:bg-black/5 transition-colors"
-          onClick={(e) => { e.stopPropagation(); setIsFlipped(true); }}
-        >
-          <FlipIcon light />
-        </button>
-      </div>
-    </div>
-  );
-
-  // Card back (Hindi)
-  const backContent = (
-    <div
-      className={cardBase}
-      style={{
-        background: `linear-gradient(180deg, ${borderColor}10 0%, #F5EFE0 100%)`,
-        border: `3px solid ${borderColor}30`,
-        boxShadow: `0 4px 20px rgba(0,0,0,0.12)`,
-      }}
-    >
-      {/* Top strip: Hindi category + score */}
-      <div
-        className={`flex items-center justify-between ${sizeConfig.headerPadding} border-b`}
-        style={{ borderColor: `${borderColor}25`, background: `${borderColor}12` }}
-      >
-        <span
-          className="text-xs font-semibold tracking-wide"
-          style={{ color: borderColor }}
-        >
-          {category.hi || scenario.cat}
-        </span>
-        {mode === "advanced" && <PointsBadge points={scenario.score} />}
-      </div>
-
-      {/* Body: icon + Hindi text */}
-      <div className={`flex flex-col items-center justify-center ${sizeConfig.padding}`}>
-        <div className={sizeConfig.iconSize} style={{ color: borderColor }}>
-          <IconComponent />
-        </div>
-        <p
-          className={`text-center leading-relaxed text-[#2D1F1A] mt-4 ${sizeConfig.textSize}`}
-        >
-          {scenario.hi || scenario.text}
-        </p>
-      </div>
-
-      {/* Bottom strip: English label + flip icon */}
-      <div
-        className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-4 py-2 border-t"
-        style={{ borderColor: `${borderColor}20`, background: `${borderColor}08` }}
-      >
-        <span
-          className="text-[10px] font-medium"
-          style={{ color: `${borderColor}90` }}
-        >
-          {scenario.cat}
-        </span>
-        <button
-          className="p-1 rounded hover:bg-black/5 transition-colors"
-          onClick={(e) => { e.stopPropagation(); setIsFlipped(false); }}
-        >
-          <FlipIcon light />
-        </button>
-      </div>
-    </div>
-  );
+  const catColor = category.c || "#C9A962";
 
   return (
     <div
-      className="cursor-pointer select-none"
-      onClick={() => setIsFlipped(!isFlipped)}
-      style={{ perspective: "1000px" }}
+      className={`relative rounded-2xl overflow-hidden max-w-sm mx-auto w-full flex flex-col cursor-pointer select-none ${sizeConfig.minHeight}`}
+      style={{
+        background: `linear-gradient(145deg, #2D1F1A 0%, #1A1412 50%, #251815 100%)`,
+        border: `3px solid ${catColor}50`,
+        boxShadow: `0 4px 20px rgba(0,0,0,0.4), 0 0 30px ${catColor}15`,
+      }}
+      onClick={toggleFlip}
     >
+      {/* Top strip: category (static) + flip icon */}
       <div
-        className="relative w-full transition-transform duration-500"
+        className={`shrink-0 flex items-center justify-between ${sizeConfig.headerPadding}`}
         style={{
-          transformStyle: "preserve-3d",
-          transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
+          background: `linear-gradient(90deg, ${catColor}25, ${catColor}15, ${catColor}25)`,
+          borderBottom: `1px solid ${catColor}30`
         }}
       >
-        <div style={{ backfaceVisibility: "hidden" }}>
-          {frontContent}
-        </div>
-        <div
-          className="absolute inset-0"
-          style={{
-            backfaceVisibility: "hidden",
-            transform: "rotateY(180deg)"
-          }}
+        <span
+          className="text-xs font-semibold uppercase tracking-wider"
+          style={{ color: catColor }}
         >
-          {backContent}
+          {scenario.cat}
+        </span>
+        <div className="flex items-center gap-2">
+          {mode === "advanced" && <PointsBadge points={scenario.score} />}
+          <button
+            className="p-1 rounded hover:bg-white/5 transition-colors"
+            onClick={(e) => { e.stopPropagation(); toggleFlip(); }}
+          >
+            <FlipIcon />
+          </button>
         </div>
+      </div>
+
+      {/* Body: flipping text area (fills remaining space) */}
+      <div className={`relative flex-1 flex items-center justify-center ${sizeConfig.padding} pb-10`}>
+        {/* Category icon watermark - centered in body */}
+        <div
+          className="absolute inset-0 flex items-center justify-center pointer-events-none select-none opacity-[0.06]"
+          style={{ color: catColor }}
+        >
+          <div className="w-32 h-32">
+            <IconComponent />
+          </div>
+        </div>
+
+        {/* Flipping text content - 3D flip for center only */}
+        <div className="relative w-full" style={{ perspective: "800px" }}>
+          <div
+            className="relative w-full transition-transform duration-500"
+            style={{
+              transformStyle: "preserve-3d",
+              transform: showHindi ? "rotateY(180deg)" : "rotateY(0deg)",
+            }}
+          >
+            {/* English text */}
+            <div style={{ backfaceVisibility: "hidden" }}>
+              <p
+                className={`text-center leading-relaxed text-[#E8D5A3] ${sizeConfig.textSize}`}
+                style={{ fontFamily: 'Georgia, serif' }}
+              >
+                {scenario.text}
+              </p>
+            </div>
+            {/* Hindi text */}
+            <div
+              className="absolute inset-0"
+              style={{
+                backfaceVisibility: "hidden",
+                transform: "rotateY(180deg)"
+              }}
+            >
+              <p
+                className={`text-center leading-relaxed text-[#E8D5A3] ${sizeConfig.textSize}`}
+              >
+                {scenario.hi || scenario.text}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Corner flourishes - positioned within body area */}
+        <div className="absolute top-2 left-2 text-xs" style={{ color: `${catColor}60` }}>✦</div>
+        <div className="absolute top-2 right-2 text-xs" style={{ color: `${catColor}60` }}>✦</div>
+        <div className="absolute bottom-10 left-2 text-xs" style={{ color: `${catColor}60` }}>✦</div>
+        <div className="absolute bottom-10 right-2 text-xs" style={{ color: `${catColor}60` }}>✦</div>
+      </div>
+
+      {/* Bottom strip: Hindi category label (static) + optional flip hint */}
+      <div
+        className="shrink-0 flex flex-col items-center justify-center px-4 py-2"
+        style={{
+          background: `linear-gradient(90deg, ${catColor}15, ${catColor}10, ${catColor}15)`,
+          borderTop: `1px solid ${catColor}25`
+        }}
+      >
+        <span
+          className="text-[10px] tracking-widest uppercase"
+          style={{ color: `${catColor}80` }}
+        >
+          {category.hi || scenario.cat}
+        </span>
+        {showFlipHint && (
+          <span className="text-[9px] text-[#F5EFE0]/40 mt-0.5">
+            {showHindi ? "Tap to show English" : "Tap to show Hindi"}
+          </span>
+        )}
       </div>
     </div>
   );
 }
 
 // ============================================================
-// WISDOM CARD
+// WISDOM CARD - Center-only flip
 // ============================================================
 export function WisdomCard({
   wisdom,
@@ -318,10 +297,16 @@ export function WisdomCard({
   isSelectable = false,
   isSelected = false,
   size = "full", // "full" | "hand" | "review"
-  guruName = null // For review mode, show guru name badge
+  guruName = null, // For review mode, show guru name badge
+  // Synchronized flip props
+  syncFlipped = null, // null = uncontrolled, true/false = controlled
 }) {
-  const [isFlipped, setIsFlipped] = useState(false);
+  const [internalFlipped, setInternalFlipped] = useState(false);
   const sizeConfig = CARD_SIZES[size];
+
+  // Use controlled or uncontrolled flip state
+  const showHindi = syncFlipped !== null ? syncFlipped : internalFlipped;
+  const showFlipControl = syncFlipped === null; // Hide flip button when externally controlled
 
   const handleClick = (e) => {
     if (onClick && isSelectable) {
@@ -331,171 +316,116 @@ export function WisdomCard({
 
   const handleFlip = (e) => {
     e.stopPropagation();
-    setIsFlipped(!isFlipped);
+    if (syncFlipped === null) {
+      setInternalFlipped(!internalFlipped);
+    }
   };
 
-  const cardBase = `
-    relative rounded-2xl overflow-hidden max-w-sm mx-auto w-full
-    ${sizeConfig.minHeight}
-    ${isSelectable && !isSelected ? 'animate-subtle-pulse' : ''}
-    ${isSelected ? 'ring-2 ring-[#C9A962] scale-[1.02]' : ''}
-    ${isSelectable ? 'cursor-pointer active:scale-[0.98]' : ''}
-    transition-all duration-200
-  `;
-
-  // Card front (English)
-  const frontContent = (
+  return (
     <div
-      className={cardBase}
+      className={`
+        relative rounded-2xl overflow-hidden max-w-sm mx-auto w-full flex flex-col
+        ${sizeConfig.minHeight}
+        ${isSelectable && !isSelected ? 'animate-subtle-pulse' : ''}
+        ${isSelected ? 'scale-[1.02]' : ''}
+        ${isSelectable ? 'cursor-pointer active:scale-[0.98]' : ''}
+        transition-all duration-200
+      `}
       style={{
         background: `linear-gradient(145deg, #2D1F1A 0%, #1A1412 50%, #251815 100%)`,
-        border: `3px solid #C9A96230`,
+        border: isSelected ? `3px solid #C9A962` : `3px solid #C9A96230`,
         boxShadow: isSelected
-          ? '0 8px 24px rgba(201, 169, 98, 0.3)'
+          ? '0 8px 24px rgba(201, 169, 98, 0.4), 0 0 20px rgba(201, 169, 98, 0.2)'
           : '0 4px 16px rgba(0,0,0,0.3)',
       }}
+      onClick={handleClick}
     >
-      {/* Guru name badge (review mode) */}
+      {/* Guru name badge (review mode) - positioned top right */}
       {guruName && (
-        <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-b-lg bg-[#6B2D3C] border border-[#C9A962]/30 border-t-0">
+        <div className="absolute -top-0.5 right-3 px-3 py-1 rounded-b-lg bg-[#6B2D3C] border border-[#C9A962]/30 border-t-0 z-10">
           <span className="text-[#E8D5A3] text-xs font-medium">{guruName}</span>
         </div>
       )}
 
-      {/* Top strip: verse reference + flip icon */}
+      {/* Top strip: verse reference (static) + flip icon / checkmark */}
       <div
-        className={`flex items-center justify-between ${sizeConfig.headerPadding} border-b border-[#C9A962]/15`}
+        className={`shrink-0 flex items-center justify-between ${sizeConfig.headerPadding} border-b border-[#C9A962]/15`}
         style={{ background: 'linear-gradient(90deg, transparent, #C9A96210, transparent)' }}
       >
         <span className="text-[#C9A962] text-xs font-semibold tracking-wider">
-          भगवद्गीता {wisdom.verse}
+          Bhagavad Gita {wisdom.verse}
         </span>
-        <button
-          className="p-1 rounded hover:bg-white/5 transition-colors"
-          onClick={handleFlip}
-        >
-          <FlipIcon />
-        </button>
+        <div className="flex items-center gap-2">
+          {showFlipControl && (
+            <button
+              className="p-1 rounded hover:bg-white/5 transition-colors"
+              onClick={handleFlip}
+            >
+              <FlipIcon />
+            </button>
+          )}
+          {isSelected && (
+            <div className="w-6 h-6 rounded-full bg-[#C9A962] flex items-center justify-center">
+              <svg className="w-4 h-4 text-[#1A1412]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Om watermark */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-5xl text-[#C9A962]/[0.06] pointer-events-none select-none">
-        ॐ
+      {/* Body: flipping text area (fills remaining space) */}
+      <div className={`relative flex-1 flex items-center justify-center ${sizeConfig.padding} pb-8`}>
+        {/* Om watermark */}
+        <div className="absolute inset-0 flex items-center justify-center text-5xl text-[#C9A962]/[0.06] pointer-events-none select-none">
+          ॐ
+        </div>
+
+        {/* Flipping text content - 3D flip for center only */}
+        <div className="relative w-full" style={{ perspective: "800px" }}>
+          <div
+            className="relative w-full transition-transform duration-500"
+            style={{
+              transformStyle: "preserve-3d",
+              transform: showHindi ? "rotateY(180deg)" : "rotateY(0deg)",
+            }}
+          >
+            {/* English text */}
+            <div style={{ backfaceVisibility: "hidden" }}>
+              <p className={`text-[#E8D5A3] text-center leading-relaxed italic ${sizeConfig.textSize}`}>
+                "{wisdom.text}"
+              </p>
+            </div>
+            {/* Hindi text */}
+            <div
+              className="absolute inset-0"
+              style={{
+                backfaceVisibility: "hidden",
+                transform: "rotateY(180deg)"
+              }}
+            >
+              <p className={`text-[#E8D5A3] text-center leading-relaxed ${sizeConfig.textSize}`}>
+                "{wisdom.hi || wisdom.text}"
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Corner flourishes */}
+        <div className="absolute top-2 left-2 text-[#C9A962]/30 text-xs">✦</div>
+        <div className="absolute top-2 right-2 text-[#C9A962]/30 text-xs">✦</div>
+        <div className="absolute bottom-8 left-2 text-[#C9A962]/30 text-xs">✦</div>
+        <div className="absolute bottom-8 right-2 text-[#C9A962]/30 text-xs">✦</div>
       </div>
 
-      {/* Body: verse text */}
-      <div className={`flex items-center justify-center ${sizeConfig.padding}`}>
-        <p className={`text-[#E8D5A3] text-center leading-relaxed italic ${sizeConfig.textSize}`}>
-          "{wisdom.text}"
-        </p>
-      </div>
-
-      {/* Bottom strip: chapter info */}
+      {/* Bottom strip: chapter info (static) */}
       <div
-        className="absolute bottom-0 left-0 right-0 flex items-center justify-center px-4 py-2 border-t border-[#C9A962]/10"
+        className="shrink-0 flex items-center justify-center px-4 py-2 border-t border-[#C9A962]/10"
         style={{ background: '#C9A96208' }}
       >
         <span className="text-[#C9A962]/60 text-[10px] tracking-widest uppercase">
           Chapter {wisdom.verse.split('.')[0]} • Verse {wisdom.verse.split('.')[1]}
         </span>
-      </div>
-
-      {/* Corner flourishes */}
-      <div className="absolute top-10 left-2 text-[#C9A962]/30 text-xs">✦</div>
-      <div className="absolute top-10 right-2 text-[#C9A962]/30 text-xs">✦</div>
-      <div className="absolute bottom-8 left-2 text-[#C9A962]/30 text-xs">✦</div>
-      <div className="absolute bottom-8 right-2 text-[#C9A962]/30 text-xs">✦</div>
-    </div>
-  );
-
-  // Card back (Sanskrit/Hindi)
-  const backContent = (
-    <div
-      className={cardBase}
-      style={{
-        background: `linear-gradient(145deg, #3D2A20 0%, #2A1F1A 50%, #352518 100%)`,
-        border: `3px solid #D4B87235`,
-        boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
-      }}
-    >
-      {/* Guru name badge (review mode) */}
-      {guruName && (
-        <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-b-lg bg-[#6B2D3C] border border-[#D4B872]/30 border-t-0">
-          <span className="text-[#E8D5A3] text-xs font-medium">{guruName}</span>
-        </div>
-      )}
-
-      {/* Top strip: verse reference + flip icon */}
-      <div
-        className={`flex items-center justify-between ${sizeConfig.headerPadding} border-b border-[#D4B872]/20`}
-        style={{ background: 'linear-gradient(90deg, transparent, #D4B87215, transparent)' }}
-      >
-        <span className="text-[#D4B872] text-xs font-semibold tracking-wider">
-          श्लोक {wisdom.verse}
-        </span>
-        <button
-          className="p-1 rounded hover:bg-white/5 transition-colors"
-          onClick={handleFlip}
-        >
-          <FlipIcon />
-        </button>
-      </div>
-
-      {/* Om watermark */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-5xl text-[#D4B872]/10 pointer-events-none select-none">
-        ॐ
-      </div>
-
-      {/* Body: Hindi/Sanskrit text */}
-      <div className={`flex items-center justify-center ${sizeConfig.padding}`}>
-        <p className={`text-[#E8D5A3] text-center leading-relaxed ${sizeConfig.textSize}`}>
-          "{wisdom.hi || wisdom.text}"
-        </p>
-      </div>
-
-      {/* Bottom strip */}
-      <div
-        className="absolute bottom-0 left-0 right-0 flex items-center justify-center px-4 py-2 border-t border-[#D4B872]/15"
-        style={{ background: '#D4B87208' }}
-      >
-        <span className="text-[#D4B872]/60 text-[10px] tracking-widest uppercase">
-          अध्याय {wisdom.verse.split('.')[0]} • श्लोक {wisdom.verse.split('.')[1]}
-        </span>
-      </div>
-
-      {/* Corner flourishes */}
-      <div className="absolute top-10 left-2 text-[#D4B872]/30 text-xs">✦</div>
-      <div className="absolute top-10 right-2 text-[#D4B872]/30 text-xs">✦</div>
-      <div className="absolute bottom-8 left-2 text-[#D4B872]/30 text-xs">✦</div>
-      <div className="absolute bottom-8 right-2 text-[#D4B872]/30 text-xs">✦</div>
-    </div>
-  );
-
-  return (
-    <div
-      className={isSelectable ? "cursor-pointer" : ""}
-      onClick={handleClick}
-      style={{ perspective: "1000px" }}
-    >
-      <div
-        className="relative w-full transition-transform duration-500"
-        style={{
-          transformStyle: "preserve-3d",
-          transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
-        }}
-      >
-        <div style={{ backfaceVisibility: "hidden" }}>
-          {frontContent}
-        </div>
-        <div
-          className="absolute inset-0"
-          style={{
-            backfaceVisibility: "hidden",
-            transform: "rotateY(180deg)"
-          }}
-        >
-          {backContent}
-        </div>
       </div>
     </div>
   );

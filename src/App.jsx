@@ -7,6 +7,7 @@ import { SacredLotus, SacredDivider } from "./components/Patterns";
 import { Button, IconButton } from "./components/Button";
 import { Rules } from "./components/Rules";
 import { ScenarioCard, WisdomCard } from "./components/FlipCard";
+import { GameScreen, ScoreChips, CenteredMessage, TimerBar } from "./components/GameScreen";
 
 export default function App() {
   const [screen, setScreen] = useState(() => (hasSeenRules() ? "home" : "rules"));
@@ -33,6 +34,14 @@ export default function App() {
   const [winner, setWinner] = useState(null);
   const [gameStats, setGameStats] = useState({ roundsPlayed: 0, catsUsed: [] });
   const [showCustom, setShowCustom] = useState(false);
+  const [selectedPreset, setSelectedPreset] = useState(null);
+  const [speedWisdom, setSpeedWisdom] = useState(false);
+  const [reflectiveMode, setReflectiveMode] = useState(false);
+  const [guruReady, setGuruReady] = useState(false);
+  const [timerActive, setTimerActive] = useState(false);
+  const [timerSeconds, setTimerSeconds] = useState(60);
+  const [showHindi, setShowHindi] = useState(false); // Synchronized flip state for cards
+  const [selectedCardIdx, setSelectedCardIdx] = useState(null); // Selected card in guruTurn
   const gOrder = useRef([]);
 
   const startGame = () => {
@@ -69,19 +78,31 @@ export default function App() {
     setWinner(null);
     setCurS(sDeck[rn - 1]);
     setPhase("roundStart");
+    setGuruReady(false);
+    setTimerActive(false);
+    setTimerSeconds(60);
+    setShowHindi(false);
+    setSelectedCardIdx(null);
   };
 
-  const selectCard = (ci) => {
+  const confirmCardSelection = () => {
+    if (selectedCardIdx === null) return;
+    const ci = selectedCardIdx;
     const gpi = gOrder.current[gIdx];
     const card = hands[gpi][ci];
     setHands((h) => h.map((hand, i) => (i === gpi ? hand.filter((_, j) => j !== ci) : hand)));
     setWDis((p) => [...p, card]);
     setSels((p) => ({ ...p, [gpi]: card }));
+    setShowHindi(false); // Reset flip state when moving to next guru
+    setSelectedCardIdx(null); // Reset selection
     if (gIdx < gOrder.current.length - 1) {
       setGIdx((p) => p + 1);
       setPhase("passing");
     } else {
       setRIdx(0);
+      setGuruReady(false);
+      setTimerActive(false);
+      setTimerSeconds(60);
       setPhase("reflect");
     }
   };
@@ -363,10 +384,20 @@ export default function App() {
 
   // ─── SETUP ───
   if (screen === "setup") {
-    const GITA_CHARACTERS = [
-      "Arjuna", "Krishna", "Draupadi", "Bhishma", "Vidura", "Yudhishthira",
-      "Gandhari", "Kunti", "Karna", "Sanjaya", "Nakula", "Sahadeva"
-    ];
+    const GITA_CHARACTERS = {
+      "Arjuna": "The warrior prince who seeks guidance",
+      "Krishna": "The divine charioteer and teacher",
+      "Draupadi": "The queen of unwavering faith",
+      "Bhishma": "The grandsire bound by his vow",
+      "Vidura": "The wise minister of dharma",
+      "Yudhishthira": "The king who never spoke untruth",
+      "Gandhari": "The blindfolded queen of sacrifice",
+      "Kunti": "The mother who knew divine secrets",
+      "Karna": "The generous warrior of tragic fate",
+      "Sanjaya": "The narrator with divine sight",
+      "Nakula": "The twin skilled in horse lore",
+      "Sahadeva": "The twin who knew the future",
+    };
 
     const add = () => {
       if (names.length < 8) setNames([...names, ""]);
@@ -375,9 +406,15 @@ export default function App() {
       if (names.length > 3) setNames(names.filter((_, j) => j !== i));
     };
     const autoFill = () => {
-      const shuffled = [...GITA_CHARACTERS].sort(() => Math.random() - 0.5);
+      const charNames = Object.keys(GITA_CHARACTERS);
+      const shuffled = [...charNames].sort(() => Math.random() - 0.5);
       setNames(shuffled.slice(0, names.length));
     };
+    const shuffleOrder = () => {
+      const shuffled = [...names].sort(() => Math.random() - 0.5);
+      setNames(shuffled);
+    };
+    const getCharacterBio = (name) => GITA_CHARACTERS[name] || null;
     const ok = names.filter((n) => n.trim()).length >= 3;
 
     return (
@@ -400,46 +437,66 @@ export default function App() {
               onClick={autoFill}
               className="text-xs px-3 py-1.5 rounded-full border border-[#C9A962]/30 text-[#C9A962]/70 hover:text-[#C9A962] hover:border-[#C9A962]/50 transition-colors"
             >
-              ✦ Gita Names
+              ✦ Suggest Names
             </button>
           </div>
           <p className="text-[#F5EFE0]/50 text-sm mb-6">Gather 3 to 8 souls for this journey</p>
 
-          <div className="space-y-3 mb-5">
-            {names.map((n, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <span className="text-[#C9A962]/40 font-display text-lg w-6">{i + 1}</span>
-                <input
-                  type="text"
-                  value={n}
-                  placeholder={`Seeker ${i + 1}`}
-                  onChange={(e) => {
-                    const x = [...names];
-                    x[i] = e.target.value;
-                    setNames(x);
-                  }}
-                  className="flex-1 bg-[#2D1F1A]/60 border border-[#C9A962]/20 rounded-xl px-4 py-3.5 text-[#F5EFE0] placeholder-[#F5EFE0]/30 text-base"
-                />
-                {names.length > 3 && (
-                  <button
-                    onClick={() => rm(i)}
-                    className="text-[#C9A962]/40 hover:text-[#C9A962] text-xl px-2 transition-colors"
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
-            ))}
+          <div className="space-y-3 mb-4">
+            {names.map((n, i) => {
+              const bio = getCharacterBio(n);
+              return (
+                <div key={i}>
+                  <div className="flex items-center gap-3">
+                    <span className="text-[#C9A962]/40 font-display text-lg w-6">{i + 1}</span>
+                    <input
+                      type="text"
+                      value={n}
+                      placeholder={`Seeker ${i + 1}`}
+                      onChange={(e) => {
+                        const x = [...names];
+                        x[i] = e.target.value;
+                        setNames(x);
+                      }}
+                      className="flex-1 bg-[#2D1F1A]/60 border border-[#C9A962]/20 rounded-xl px-4 py-3.5 text-[#F5EFE0] placeholder-[#F5EFE0]/30 text-base"
+                    />
+                    {names.length > 3 && (
+                      <button
+                        onClick={() => rm(i)}
+                        className="text-[#C9A962]/40 hover:text-[#C9A962] text-xl px-2 transition-colors"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                  {bio && (
+                    <p className="text-[#C9A962]/50 text-xs ml-9 mt-1 italic">
+                      ℹ {bio}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
-          {names.length < 8 && (
-            <button
-              onClick={add}
-              className="w-full py-3.5 rounded-xl border border-dashed border-[#C9A962]/30 text-[#C9A962]/60 hover:border-[#C9A962]/50 hover:text-[#C9A962] transition-colors"
-            >
-              + Add Seeker
-            </button>
-          )}
+          <div className="flex gap-3 mb-5">
+            {names.length < 8 && (
+              <button
+                onClick={add}
+                className="flex-1 py-3 rounded-xl border border-dashed border-[#C9A962]/30 text-[#C9A962]/60 hover:border-[#C9A962]/50 hover:text-[#C9A962] transition-colors text-sm"
+              >
+                + Add Seeker
+              </button>
+            )}
+            {names.filter(n => n.trim()).length >= 2 && (
+              <button
+                onClick={shuffleOrder}
+                className="py-3 px-4 rounded-xl border border-[#C9A962]/20 text-[#C9A962]/50 hover:border-[#C9A962]/40 hover:text-[#C9A962]/80 transition-colors text-sm"
+              >
+                🎲 Shuffle Order
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Sticky footer */}
@@ -470,10 +527,24 @@ export default function App() {
     };
     const scenarioCount = SCENARIOS.filter((s) => cats.has(s.cat)).length;
 
-    // Preset configurations - these start the game immediately
-    const applyPresetAndStart = (presetMode, presetRounds, presetCats) => {
-      const selectedCats = new Set(presetCats);
-      const filteredScenarios = shuffle(SCENARIOS.filter((s) => selectedCats.has(s.cat)));
+    // Apply preset settings (doesn't start game immediately anymore)
+    const selectPreset = (presetKey, presetMode, presetRounds, presetCats, scoreFilter = null) => {
+      setSelectedPreset(presetKey);
+      setMode(presetMode);
+      setRounds(presetRounds);
+      setCats(new Set(presetCats));
+      setShowCustom(false);
+    };
+
+    // Start game with current settings
+    const startWithSettings = () => {
+      // Filter scenarios by category and optionally by score (for kid-friendly)
+      let filteredScenarios = SCENARIOS.filter((s) => cats.has(s.cat));
+      if (selectedPreset === "kids") {
+        filteredScenarios = filteredScenarios.filter((s) => s.score <= 2);
+      }
+      filteredScenarios = shuffle(filteredScenarios);
+
       const sw = shuffle([...WISDOM]);
       let wd = [...sw], wdi = [];
       const h = players.map(() => {
@@ -483,9 +554,6 @@ export default function App() {
         return r.drawn;
       });
 
-      setMode(presetMode);
-      setRounds(presetRounds);
-      setCats(selectedCats);
       setSDeck(filteredScenarios);
       setWDeck(wd);
       setWDis(wdi);
@@ -497,7 +565,7 @@ export default function App() {
       setCurS(filteredScenarios[0]);
       gOrder.current = getGurus(0, players.length);
       setGIdx(0);
-      setGameStats({ roundsPlayed: 0, catsUsed: [...selectedCats] });
+      setGameStats({ roundsPlayed: 0, catsUsed: [...cats] });
       setScreen("game");
     };
 
@@ -505,35 +573,32 @@ export default function App() {
       {
         key: "quick",
         label: "Quick Game",
-        desc: "Fast & fun",
+        desc: "Simple scoring, 1 point per round",
         icon: "⚡",
-        apply: () => applyPresetAndStart(
-          "simple",
-          players.length,
-          ["Personal Dilemmas", "Relationship Situations", "Mind & Emotions", "Family & Parenting"]
-        ),
+        color: "#EAB308", // Yellow - Relationships
+        mode: "simple",
+        rounds: players.length,
+        cats: ["Personal Dilemmas", "Relationship Situations", "Mind & Emotions", "Family & Parenting"],
       },
       {
         key: "kids",
         label: "Kid Friendly",
-        desc: "Family safe",
+        desc: "Easy scenarios, simple rules",
         icon: "🌟",
-        apply: () => applyPresetAndStart(
-          "simple",
-          Math.max(players.length, Math.min(players.length * 2, 8)),
-          ["Personal Dilemmas", "Relationship Situations", "Family & Parenting", "Mind & Emotions"]
-        ),
+        color: "#DB2777", // Pink - Family
+        mode: "simple",
+        rounds: Math.max(players.length, Math.min(players.length * 2, 8)),
+        cats: ["Personal Dilemmas", "Relationship Situations", "Family & Parenting", "Mind & Emotions"],
       },
       {
         key: "deep",
-        label: "Deep",
-        desc: "Contemplative",
+        label: "Deep Contemplation",
+        desc: "Advanced scoring (1-5 pts), profound themes",
         icon: "🪷",
-        apply: () => applyPresetAndStart(
-          "advanced",
-          players.length * 3,
-          ["Moral/Ethical Decisions", "Spiritual Growth", "Mind & Emotions", "Social Responsibility", "Wealth & Simplicity"]
-        ),
+        color: "#0D9488", // Teal - Spiritual
+        mode: "advanced",
+        rounds: players.length * 3,
+        cats: ["Moral/Ethical Decisions", "Spiritual Growth", "Mind & Emotions", "Social Responsibility", "Wealth & Simplicity"],
       },
     ];
 
@@ -552,40 +617,66 @@ export default function App() {
           </button>
 
           <h2 className="font-display text-2xl text-[#C9A962] mb-2">Choose Your Path</h2>
-          <p className="text-[#F5EFE0]/40 text-sm mb-6">Select a journey type</p>
+          <p className="text-[#F5EFE0]/40 text-sm italic mb-6">How deep will you go?</p>
 
           {/* Preset Modes */}
-          <div className="space-y-3 mb-6">
-            {presets.map((p) => (
-              <button
-                key={p.key}
-                onClick={() => {
-                  p.apply();
-                  setShowCustom(false);
-                }}
-                className="w-full flex items-center gap-4 p-4 rounded-2xl border border-[#C9A962]/20 bg-[#2D1F1A]/40 hover:border-[#C9A962]/40 hover:bg-[#2D1F1A]/60 transition-all text-left active:scale-[0.98]"
-              >
-                <span className="text-2xl">{p.icon}</span>
-                <div className="flex-1">
-                  <span className="block text-[#E8D5A3] font-medium">{p.label}</span>
-                  <span className="block text-[#F5EFE0]/40 text-xs mt-0.5">{p.desc}</span>
-                </div>
-                <span className="text-[#C9A962]/40">→</span>
-              </button>
-            ))}
+          <div className="space-y-3 mb-4">
+            {presets.map((p) => {
+              const isSelected = selectedPreset === p.key;
+              return (
+                <button
+                  key={p.key}
+                  onClick={() => selectPreset(p.key, p.mode, p.rounds, p.cats)}
+                  className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left active:scale-[0.98] ${
+                    isSelected
+                      ? "border-[#C9A962] bg-[#C9A962]/10"
+                      : "border-[#C9A962]/15 bg-[#2D1F1A]/40 hover:border-[#C9A962]/30"
+                  }`}
+                  style={isSelected ? { boxShadow: `0 0 20px ${p.color}20` } : {}}
+                >
+                  {/* Radio indicator */}
+                  <div
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                      isSelected ? "border-[#C9A962] bg-[#C9A962]" : "border-[#C9A962]/40"
+                    }`}
+                  >
+                    {isSelected && <div className="w-2 h-2 rounded-full bg-[#1A1412]" />}
+                  </div>
+                  <span className="text-2xl">{p.icon}</span>
+                  <div className="flex-1">
+                    <span className="block text-[#E8D5A3] font-medium">{p.label}</span>
+                    <span className="block text-[#F5EFE0]/40 text-xs mt-0.5">{p.desc}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-5">
+            <div className="flex-1 h-px bg-[#C9A962]/15" />
+            <span className="text-[#C9A962]/30 text-xs">or</span>
+            <div className="flex-1 h-px bg-[#C9A962]/15" />
           </div>
 
           {/* Custom toggle */}
           <button
-            onClick={() => setShowCustom(!showCustom)}
-            className="w-full text-center text-[#C9A962]/60 text-sm py-3 hover:text-[#C9A962] transition-colors"
+            onClick={() => {
+              setShowCustom(!showCustom);
+              if (!showCustom) setSelectedPreset(null);
+            }}
+            className={`w-full text-center text-sm py-3 transition-colors rounded-xl border ${
+              showCustom || !selectedPreset
+                ? "text-[#C9A962] border-[#C9A962]/30 bg-[#C9A962]/5"
+                : "text-[#C9A962]/60 border-transparent hover:text-[#C9A962]"
+            }`}
           >
             {showCustom ? "Hide custom options ▲" : "Customize settings ▼"}
           </button>
 
           {/* Custom Settings */}
           {showCustom && (
-            <div className="mt-4 pt-4 border-t border-[#C9A962]/10">
+            <div className="mt-4 pt-4 border-t border-[#C9A962]/15">
               {/* Game Mode */}
               <p className="text-[#E8D5A3] text-sm font-medium mb-3">Scoring</p>
               <div className="flex gap-3 mb-5">
@@ -646,16 +737,96 @@ export default function App() {
                 })}
               </div>
 
-              <p className="text-center text-[#F5EFE0]/30 text-xs">
-                {scenarioCount} scenarios
+              <p className="text-center text-[#F5EFE0]/30 text-xs mb-4">
+                {scenarioCount} scenarios available
               </p>
             </div>
           )}
+
+          {/* Game Variants - Always visible */}
+          <div className="mt-4 pt-4 border-t border-[#C9A962]/10">
+            <p className="text-[#E8D5A3] text-sm font-medium mb-3">Game Variants</p>
+
+            {/* Speed Wisdom Toggle */}
+            <button
+              onClick={() => setSpeedWisdom(!speedWisdom)}
+              className={`w-full flex items-center justify-between p-3 rounded-xl border mb-2 transition-all ${
+                speedWisdom
+                  ? "border-[#C9A962]/40 bg-[#C9A962]/10"
+                  : "border-[#C9A962]/15 bg-[#2D1F1A]/30"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-lg">⏱</span>
+                <div className="text-left">
+                  <span className={`block text-sm ${speedWisdom ? "text-[#E8D5A3]" : "text-[#F5EFE0]/60"}`}>
+                    Speed Wisdom
+                  </span>
+                  <span className="block text-[#F5EFE0]/40 text-xs">30-second timer for explanations</span>
+                </div>
+              </div>
+              <div
+                className={`w-10 h-6 rounded-full p-1 transition-all ${
+                  speedWisdom ? "bg-[#C9A962]" : "bg-[#2D1F1A]"
+                }`}
+              >
+                <div
+                  className={`w-4 h-4 rounded-full bg-white transition-transform ${
+                    speedWisdom ? "translate-x-4" : "translate-x-0"
+                  }`}
+                />
+              </div>
+            </button>
+
+            {/* Reflective Mode Toggle */}
+            <button
+              onClick={() => setReflectiveMode(!reflectiveMode)}
+              className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${
+                reflectiveMode
+                  ? "border-[#C9A962]/40 bg-[#C9A962]/10"
+                  : "border-[#C9A962]/15 bg-[#2D1F1A]/30"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-lg">🧘</span>
+                <div className="text-left">
+                  <span className={`block text-sm ${reflectiveMode ? "text-[#E8D5A3]" : "text-[#F5EFE0]/60"}`}>
+                    Reflective Mode
+                  </span>
+                  <span className="block text-[#F5EFE0]/40 text-xs">No scoring, just sharing wisdom</span>
+                </div>
+              </div>
+              <div
+                className={`w-10 h-6 rounded-full p-1 transition-all ${
+                  reflectiveMode ? "bg-[#C9A962]" : "bg-[#2D1F1A]"
+                }`}
+              >
+                <div
+                  className={`w-4 h-4 rounded-full bg-white transition-transform ${
+                    reflectiveMode ? "translate-x-4" : "translate-x-0"
+                  }`}
+                />
+              </div>
+            </button>
+          </div>
         </div>
 
         {/* Sticky footer */}
         <div className="shrink-0 p-6 pt-4 bg-gradient-to-t from-[#1A1412] via-[#1A1412] to-transparent">
-          <Button onClick={startGame}>Enter the GitaVerse</Button>
+          <Button
+            onClick={startWithSettings}
+            disabled={!selectedPreset && !showCustom}
+          >
+            {selectedPreset
+              ? `Begin ${presets.find(p => p.key === selectedPreset)?.label}`
+              : "Enter the GitaVerse"
+            }
+          </Button>
+          {!selectedPreset && !showCustom && (
+            <p className="text-center text-[#F5EFE0]/40 text-xs mt-3">
+              Select a path or customize settings to begin
+            </p>
+          )}
         </div>
       </div>
     );
@@ -669,63 +840,34 @@ export default function App() {
 
     // Round Start
     if (phase === "roundStart") {
+      // Compact scores for top bar - show leader or tied scores
+      const maxScore = Math.max(...players.map(p => p.score));
+      const leaders = players.filter(p => p.score === maxScore);
+      const scoreDisplay = maxScore === 0
+        ? `${players.length} players`
+        : leaders.length === 1
+          ? `${leaders[0].name}: ${maxScore} pts`
+          : `Tied at ${maxScore}`;
+
       return (
-        <div
-          className="h-full flex flex-col"
-          style={{ background: "linear-gradient(180deg, #1A1412 0%, #2D1F1A 50%, #1A1412 100%)" }}
+        <GameScreen
+          roundInfo={`Round ${rNum} of ${mr}`}
+          topRightContent={scoreDisplay}
+          title="The Seeker Speaks"
+          instruction={`${seeker.name}, read the dilemma aloud`}
+          contentCentered
+          primaryAction={{ label: "Summon the Gurus", onClick: () => setPhase("passing") }}
         >
-          <div className="flex-1 overflow-y-auto p-5">
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-[#F5EFE0]/40 text-sm">
-                Round {rNum} of {mr}
-              </span>
-              <span className="text-[#C9A962]/60 text-xs px-3 py-1 rounded-full border border-[#C9A962]/20">
-                {mode === "advanced" ? "Advanced" : "Simple"}
-              </span>
-            </div>
-
-            {/* Phase title */}
-            <div className="text-center mb-4">
-              <h2 className="font-display text-xl text-[#C9A962]">The Seeker Speaks</h2>
-              <p className="text-[#F5EFE0]/40 text-xs mt-1">Read the dilemma aloud to the group</p>
-            </div>
-
-            <div className="text-center mb-4">
-              <p className="text-[#F5EFE0]/50 text-sm">The Seeker</p>
-              <p className="font-display text-3xl text-[#C9A962] mt-1">{seeker.name}</p>
-            </div>
-
-            {/* Scenario Card - New Game Card Style */}
-            <div className="mb-4">
-              <ScenarioCard scenario={curS} category={cfg} mode={mode} />
-            </div>
-
-            <p className="text-center text-[#C9A962]/50 text-sm italic mb-4 px-4">
-              "O wise gurus, I bring you my dilemma. Share your wisdom."
-            </p>
-
-            {/* Scores */}
-            <div className="flex flex-wrap gap-2 justify-center">
-              {players.map((p, i) => (
-                <div
-                  key={i}
-                  className={`px-3 py-1.5 rounded-full text-xs ${
-                    i === skIdx
-                      ? "bg-[#C9A962]/20 text-[#C9A962] border border-[#C9A962]/40"
-                      : "bg-[#2D1F1A]/60 text-[#F5EFE0]/50"
-                  }`}
-                >
-                  {p.name}: {p.score}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Sticky footer */}
-          <div className="shrink-0 p-6 pt-4 bg-gradient-to-t from-[#1A1412] via-[#1A1412] to-transparent">
-            <Button onClick={() => setPhase("passing")}>Summon the Gurus</Button>
-          </div>
-        </div>
+          {/* Scenario Card - centered with breathing room */}
+          <ScenarioCard
+            scenario={curS}
+            category={cfg}
+            mode={mode}
+            syncFlipped={showHindi}
+            onFlipChange={setShowHindi}
+            showFlipHint
+          />
+        </GameScreen>
       );
     }
 
@@ -734,30 +876,22 @@ export default function App() {
       const gpi = gOrder.current[gIdx];
       const guru = players[gpi];
       return (
-        <div
-          className="h-full flex flex-col items-center justify-center p-8"
-          style={{ background: "linear-gradient(180deg, #1A1412 0%, #2D1F1A 50%, #1A1412 100%)" }}
+        <GameScreen
+          roundInfo={`Round ${rNum} of ${mr}`}
+          topRightContent={`Guru ${gIdx + 1} of ${gOrder.current.length}`}
+          title="Gurus Contemplate"
+          instruction="Pass the phone privately to each Guru"
+          contentCentered
+          primaryAction={{ label: `I am ${guru.name}`, onClick: () => setPhase("guruTurn") }}
         >
-          {/* Phase title */}
-          <div className="text-center mb-6">
-            <h2 className="font-display text-xl text-[#C9A962]">Gurus Contemplate</h2>
-            <p className="text-[#F5EFE0]/40 text-xs mt-1">Pass the phone privately to each Guru</p>
-          </div>
-
           <div className="animate-breathe mb-6">
             <SacredLotus size={100} />
           </div>
-
-          <p className="text-[#F5EFE0]/50 text-sm mb-2">Pass the phone to</p>
-          <p className="font-display text-4xl text-[#C9A962] mb-2">{guru.name}</p>
-          <p className="text-[#F5EFE0]/30 text-sm mb-10">
-            Guru {gIdx + 1} of {gOrder.current.length}
-          </p>
-
-          <Button onClick={() => setPhase("guruTurn")} className="max-w-xs">
-            I am {guru.name}
-          </Button>
-        </div>
+          <CenteredMessage
+            title={guru.name}
+            subtitle="Pass the phone to this Guru"
+          />
+        </GameScreen>
       );
     }
 
@@ -767,47 +901,51 @@ export default function App() {
       const guru = players[gpi];
       const hand = hands[gpi];
       return (
-        <div
-          className="h-full flex flex-col"
-          style={{ background: "linear-gradient(180deg, #1A1412 0%, #2D1F1A 50%, #1A1412 100%)" }}
+        <GameScreen
+          roundInfo={`Round ${rNum} of ${mr}`}
+          topRightContent={`${guru.name}'s Hand`}
+          title="Gurus Contemplate"
+          instruction="Select one wisdom card from your hand"
+          primaryAction={selectedCardIdx !== null ? {
+            label: "Play This Card",
+            onClick: confirmCardSelection
+          } : null}
         >
-          <div className="flex-1 overflow-y-auto p-5">
-            {/* Phase title */}
-            <div className="text-center mb-3">
-              <h2 className="font-display text-xl text-[#C9A962]">Gurus Contemplate</h2>
-              <p className="text-[#F5EFE0]/40 text-xs mt-1">Select one wisdom card from your hand</p>
-            </div>
-
-            {/* Header with role */}
-            <div className="text-center mb-4">
-              <p className="text-[#C9A962]/60 text-xs tracking-widest uppercase">You are the Guru</p>
-              <p className="font-display text-3xl text-[#C9A962] mt-1">{guru.name}</p>
-            </div>
-
-            {/* Scenario reminder - compact card */}
-            <div className="mb-4">
-              <ScenarioCard scenario={curS} category={cfg} mode={mode} isCompact={true} />
-            </div>
-
-            {/* Clear instruction */}
-            <div className="text-center mb-4 py-2 rounded-lg bg-[#C9A962]/10 border border-[#C9A962]/20">
-              <p className="text-[#E8D5A3] text-sm font-medium">Tap a wisdom card to play it</p>
-            </div>
-
-            {/* Wisdom cards */}
-            <div className="space-y-3">
-              {hand.map((card, i) => (
-                <WisdomCard
-                  key={card.id}
-                  wisdom={card}
-                  isSelectable={true}
-                  isCompact={true}
-                  onClick={() => selectCard(i)}
-                />
-              ))}
-            </div>
+          {/* Scenario card - controls flip for all cards */}
+          <div className="mb-4">
+            <ScenarioCard
+              scenario={curS}
+              category={cfg}
+              mode={mode}
+              size="hand"
+              syncFlipped={showHindi}
+              onFlipChange={setShowHindi}
+              showFlipHint
+            />
           </div>
-        </div>
+
+          {/* Divider with instruction */}
+          <div className="flex items-center gap-3 my-4">
+            <div className="flex-1 h-px bg-[#C9A962]/20" />
+            <span className="text-[#C9A962]/60 text-xs uppercase tracking-wider">Choose your response</span>
+            <div className="flex-1 h-px bg-[#C9A962]/20" />
+          </div>
+
+          {/* Wisdom cards - follow scenario card's flip state */}
+          <div className="space-y-3">
+            {hand.map((card, i) => (
+              <WisdomCard
+                key={card.id}
+                wisdom={card}
+                isSelectable={true}
+                isSelected={selectedCardIdx === i}
+                size="hand"
+                onClick={() => setSelectedCardIdx(selectedCardIdx === i ? null : i)}
+                syncFlipped={showHindi}
+              />
+            ))}
+          </div>
+        </GameScreen>
       );
     }
 
@@ -816,120 +954,137 @@ export default function App() {
       const rgi = gOrder.current[rIdx];
       const rg = players[rgi];
       const rc = sels[rgi];
-      return (
-        <div
-          className="h-full flex flex-col"
-          style={{ background: "linear-gradient(180deg, #1A1412 0%, #2D1F1A 50%, #1A1412 100%)" }}
-        >
-          <div className="flex-1 overflow-y-auto p-5">
-            {/* Phase title */}
-            <div className="text-center mb-3">
-              <h2 className="font-display text-xl text-[#C9A962]">Wisdom Revealed</h2>
-              <p className="text-[#F5EFE0]/40 text-xs mt-1">Each Guru shares their chosen verse</p>
+
+      // Privacy mask - Guru must confirm they're ready before card is revealed
+      if (!guruReady) {
+        return (
+          <GameScreen
+            roundInfo={`Round ${rNum} of ${mr}`}
+            topRightContent={`${rIdx + 1} of ${gOrder.current.length} Gurus`}
+            title="Wisdom Revealed"
+            instruction="Hand the phone to the Guru who will share"
+            contentCentered
+            primaryAction={{
+              label: "I'm Ready to Share",
+              onClick: () => {
+                setGuruReady(true);
+                if (speedWisdom) {
+                  setTimerActive(true);
+                  setTimerSeconds(60);
+                }
+              }
+            }}
+          >
+            <div className="w-20 h-20 rounded-full bg-[#6B2D3C]/40 border-2 border-[#C9A962]/40 flex items-center justify-center mb-4">
+              <span className="font-display text-3xl text-[#C9A962]">{rg.name[0]}</span>
             </div>
-
-            {/* Progress indicator */}
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-[#C9A962]/60 text-xs tracking-widest uppercase">Sharing Wisdom</span>
-              <span className="text-[#F5EFE0]/40 text-sm">
-                {rIdx + 1} of {gOrder.current.length}
-              </span>
-            </div>
-
-            {/* Scenario reminder - compact */}
-            <div className="mb-4">
-              <ScenarioCard scenario={curS} category={cfg} mode={mode} isCompact={true} />
-            </div>
-
-            {/* Guru name */}
-            <div className="text-center mb-4">
-              <p className="font-display text-2xl text-[#C9A962]">{rg.name}</p>
-              <p className="text-[#F5EFE0]/40 text-xs mt-1">shares their wisdom</p>
-            </div>
-
-            {/* Wisdom card display */}
-            <WisdomCard wisdom={rc} isSelectable={false} />
-
-            {/* Instruction for the guru */}
-            <div className="mt-4 py-3 px-4 rounded-lg bg-[#6B2D3C]/20 border border-[#C9A962]/15">
-              <p className="text-[#E8D5A3]/80 text-sm text-center">
-                <span className="text-[#C9A962]">{rg.name}</span>, explain how this wisdom speaks to the dilemma
+            <CenteredMessage
+              title={rg.name}
+              subtitle="Tap when ready to reveal your wisdom"
+            />
+            <div className="mt-6 p-4 rounded-xl bg-[#2D1F1A]/60 border border-[#C9A962]/15 max-w-xs">
+              <p className="text-[#F5EFE0]/50 text-xs text-center">
+                Your card will be revealed. Explain how it addresses the Seeker's dilemma.
               </p>
             </div>
+          </GameScreen>
+        );
+      }
+
+      // Card revealed - Guru explains their wisdom
+      const handleNextGuru = () => {
+        setGuruReady(false);
+        setTimerActive(false);
+        setTimerSeconds(60);
+        setShowHindi(false);
+        if (rIdx < gOrder.current.length - 1) {
+          setRIdx((p) => p + 1);
+        } else {
+          setPhase("seekerPick");
+        }
+      };
+
+      return (
+        <GameScreen
+          roundInfo={`Round ${rNum} of ${mr}`}
+          topRightContent={`${rIdx + 1} of ${gOrder.current.length} Gurus`}
+          title="Wisdom Revealed"
+          instruction={`${rg.name}, explain how this wisdom addresses the dilemma`}
+          primaryAction={{
+            label: rIdx < gOrder.current.length - 1 ? "Hear Next Guru" : "Pass to Seeker",
+            onClick: handleNextGuru
+          }}
+        >
+          {/* Speed Wisdom Timer */}
+          {speedWisdom && timerActive && (
+            <TimerBar
+              seconds={timerSeconds}
+              maxSeconds={60}
+              onTick={(s) => setTimerSeconds(s)}
+              onComplete={handleNextGuru}
+            />
+          )}
+
+          {/* Scenario reminder - controls flip for all cards */}
+          <div className="mb-4">
+            <ScenarioCard
+              scenario={curS}
+              category={cfg}
+              mode={mode}
+              size="hand"
+              syncFlipped={showHindi}
+              onFlipChange={setShowHindi}
+              showFlipHint
+            />
           </div>
 
-          {/* Sticky footer */}
-          <div className="shrink-0 p-6 pt-4 bg-gradient-to-t from-[#1A1412] via-[#1A1412] to-transparent">
-            <Button
-              onClick={() => {
-                if (rIdx < gOrder.current.length - 1) setRIdx((p) => p + 1);
-                else setPhase("seekerPick");
-              }}
-            >
-              {rIdx < gOrder.current.length - 1 ? "Hear Next Guru" : "Pass to Seeker"}
-            </Button>
-          </div>
-        </div>
+          {/* Wisdom card with guru name - follows scenario flip */}
+          <WisdomCard wisdom={rc} isSelectable={false} size="full" guruName={rg.name} syncFlipped={showHindi} />
+        </GameScreen>
       );
     }
 
     // Seeker Pick
     if (phase === "seekerPick") {
       return (
-        <div
-          className="h-full flex flex-col"
-          style={{ background: "linear-gradient(180deg, #1A1412 0%, #2D1F1A 50%, #1A1412 100%)" }}
+        <GameScreen
+          roundInfo={`Round ${rNum} of ${mr}`}
+          topRightContent={`${seeker.name}'s choice`}
+          title="Seeker's Choice"
+          instruction="Whose wisdom resonated most? Tap to award the round"
         >
-          <div className="flex-1 overflow-y-auto p-5">
-            {/* Phase title */}
-            <div className="text-center mb-3">
-              <h2 className="font-display text-xl text-[#C9A962]">Seeker's Choice</h2>
-              <p className="text-[#F5EFE0]/40 text-xs mt-1">Award the round to the wisest Guru</p>
-            </div>
-
-            {/* Header */}
-            <div className="text-center mb-4">
-              <p className="text-[#C9A962]/60 text-xs tracking-widest uppercase">You are the Seeker</p>
-              <p className="font-display text-3xl text-[#C9A962] mt-1">{seeker.name}</p>
-            </div>
-
-            {/* Scenario reminder - compact */}
-            <div className="mb-4">
-              <ScenarioCard scenario={curS} category={cfg} mode={mode} isCompact={true} />
-            </div>
-
-            {/* Clear instruction */}
-            <div className="text-center mb-4 py-2 rounded-lg bg-[#C9A962]/10 border border-[#C9A962]/20">
-              <p className="text-[#E8D5A3] text-sm font-medium">Whose wisdom resonated most?</p>
-              <p className="text-[#F5EFE0]/50 text-xs mt-1">Tap to award the round</p>
-            </div>
-
-            {/* Guru options with their wisdom cards */}
-            <div className="space-y-3">
-              {gOrder.current.map((gi) => {
-                const g = players[gi];
-                const card = sels[gi];
-                return (
-                  <button
-                    key={gi}
-                    onClick={() => pickWinner(gi)}
-                    className="w-full text-left rounded-xl p-3 border-2 border-[#C9A962]/15 active:scale-[0.98] active:border-[#C9A962] transition-all hover:border-[#C9A962]/40"
-                    style={{ background: "linear-gradient(135deg, #2D1F1A 0%, #1A1412 100%)" }}
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-display bg-[#6B2D3C]/40 text-[#C9A962] border border-[#C9A962]/30 shrink-0">
-                        {g.name[0]}
-                      </div>
-                      <p className="text-[#C9A962] font-medium">{g.name}</p>
-                      <span className="ml-auto text-[#C9A962]/50 text-xs">{card.verse}</span>
-                    </div>
-                    <p className="text-[#E8D5A3]/80 text-sm leading-relaxed pl-10">"{card.text}"</p>
-                  </button>
-                );
-              })}
-            </div>
+          {/* Scenario reminder - controls flip for all cards */}
+          <div className="mb-4">
+            <ScenarioCard
+              scenario={curS}
+              category={cfg}
+              mode={mode}
+              size="hand"
+              syncFlipped={showHindi}
+              onFlipChange={setShowHindi}
+              showFlipHint
+            />
           </div>
-        </div>
+
+          {/* Guru wisdom cards - follow scenario flip */}
+          <div className="space-y-3">
+            {gOrder.current.map((gi) => {
+              const g = players[gi];
+              const card = sels[gi];
+              return (
+                <WisdomCard
+                  key={gi}
+                  wisdom={card}
+                  isSelectable={true}
+                  size="review"
+                  guruName={g.name}
+                  onClick={() => pickWinner(gi)}
+                  syncFlipped={showHindi}
+                />
+              );
+            })}
+          </div>
+        </GameScreen>
       );
     }
 
@@ -938,54 +1093,51 @@ export default function App() {
       const wp = players[winner];
       const pts = mode === "advanced" ? curS.score : 1;
       return (
-        <div
-          className="h-full flex flex-col"
-          style={{ background: "linear-gradient(180deg, #1A1412 0%, #2D1F1A 50%, #1A1412 100%)" }}
+        <GameScreen
+          roundInfo={`Round ${rNum} of ${mr}`}
+          topRightContent={`+${pts} ${pts === 1 ? "point" : "points"}`}
+          title="Round Complete"
+          instruction={`${wp.name} wins this round with the wisest counsel`}
+          contentCentered
+          primaryAction={{
+            label: rNum >= (rounds || players.length * 2) ? "Final Wisdom" : "Next Round",
+            onClick: nextRound
+          }}
         >
-          <div className="flex-1 flex flex-col items-center justify-center p-6">
-            <div className="animate-breathe mb-4">
-              <SacredLotus size={90} />
-            </div>
+          <div className="animate-breathe mb-4">
+            <SacredLotus size={80} />
+          </div>
 
-            <p className="text-[#F5EFE0]/50 text-sm mb-1">Wisest Guru</p>
-            <p className="font-display text-3xl text-[#C9A962] mb-1">{wp.name}</p>
-            <p className="text-[#C9A962]/60 text-lg mb-6">
-              +{pts} {pts === 1 ? "point" : "points"}
-            </p>
+          <CenteredMessage
+            title={wp.name}
+            subtitle="Wisest Guru"
+          />
 
-            {/* Standings */}
-            <div className="w-full max-w-xs space-y-2">
-              {[...players]
-                .sort((a, b) => b.score - a.score)
-                .map((p) => (
-                  <div
-                    key={p.name}
-                    className={`flex items-center justify-between px-4 py-2.5 rounded-xl ${
-                      p.name === wp.name
-                        ? "bg-[#C9A962]/15 border border-[#C9A962]/30"
-                        : "bg-[#2D1F1A]/50"
+          {/* Standings */}
+          <div className="w-full max-w-xs space-y-2 mt-6">
+            {[...players]
+              .sort((a, b) => b.score - a.score)
+              .map((p) => (
+                <div
+                  key={p.name}
+                  className={`flex items-center justify-between px-4 py-2.5 rounded-xl ${
+                    p.name === wp.name
+                      ? "bg-[#C9A962]/15 border border-[#C9A962]/30"
+                      : "bg-[#2D1F1A]/50"
+                  }`}
+                >
+                  <span
+                    className={`text-sm ${
+                      p.name === wp.name ? "text-[#C9A962] font-medium" : "text-[#F5EFE0]/60"
                     }`}
                   >
-                    <span
-                      className={`text-sm ${
-                        p.name === wp.name ? "text-[#C9A962] font-medium" : "text-[#F5EFE0]/60"
-                      }`}
-                    >
-                      {p.name}
-                    </span>
-                    <span className="text-[#C9A962] font-display text-lg">{p.score}</span>
-                  </div>
-                ))}
-            </div>
+                    {p.name}
+                  </span>
+                  <span className="text-[#C9A962] font-display text-lg">{p.score}</span>
+                </div>
+              ))}
           </div>
-
-          {/* Sticky footer */}
-          <div className="shrink-0 p-6 pt-4 bg-gradient-to-t from-[#1A1412] via-[#1A1412] to-transparent">
-            <Button onClick={nextRound}>
-              {rNum >= (rounds || players.length * 2) ? "Final Wisdom" : "Next Round"}
-            </Button>
-          </div>
-        </div>
+        </GameScreen>
       );
     }
   }
@@ -997,105 +1149,92 @@ export default function App() {
     const totalPts = players.reduce((s, p) => s + p.score, 0);
 
     return (
-      <div
-        className="h-full flex flex-col"
-        style={{
-          background: "radial-gradient(ellipse at center top, #2D1F1A 0%, #1A1412 60%, #1A1412 100%)",
+      <GameScreen
+        roundInfo={`${gameStats.roundsPlayed} rounds played`}
+        topRightContent={mode === "advanced" ? "Advanced" : "Simple"}
+        title="Journey Complete"
+        instruction={`${champ.name} emerges as the Ultimate Wisdom Seeker`}
+        primaryAction={{
+          label: "Journey Again",
+          onClick: () => {
+            setPlayers(players.map((p) => ({ ...p, score: 0, wins: 0 })));
+            setScreen("settings");
+          }
+        }}
+        secondaryAction={{
+          label: "New Gathering",
+          onClick: () => {
+            setScreen("home");
+            setPlayers([]);
+            setNames(["", "", ""]);
+          }
         }}
       >
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="flex flex-col items-center pt-4 mb-8">
-            <div className="animate-float">
-              <SacredLotus size={100} />
-            </div>
-
-            <p className="text-[#F5EFE0]/50 text-sm mt-6 mb-1">The Ultimate</p>
-            <p className="font-display text-2xl text-[#C9A962]">Wisdom Seeker</p>
-            <p className="font-display text-4xl text-[#E8D5A3] mt-2">{champ.name}</p>
-            <p className="text-[#C9A962] text-xl mt-2">{champ.score} points</p>
+        {/* Champion display */}
+        <div className="flex flex-col items-center mb-6">
+          <div className="animate-float mb-4">
+            <SacredLotus size={80} />
           </div>
+          <p className="font-display text-3xl text-[#E8D5A3]">{champ.name}</p>
+          <p className="text-[#C9A962] text-lg mt-1">{champ.score} points</p>
+        </div>
 
-          {/* Leaderboard */}
-          <div className="space-y-3 mb-6">
-            {sorted.map((p, i) => {
-              const pct = totalPts ? Math.round((p.score / totalPts) * 100) : 0;
-              const medals = ["🥇", "🥈", "🥉"];
-              return (
-                <div
-                  key={p.name}
-                  className={`rounded-2xl p-4 ${
-                    i === 0
-                      ? "bg-[#C9A962]/10 border border-[#C9A962]/30"
-                      : "bg-[#2D1F1A]/50 border border-[#C9A962]/10"
-                  }`}
-                >
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="text-xl w-8">{medals[i] || `#${i + 1}`}</span>
-                    <span
-                      className={`flex-1 font-medium ${i === 0 ? "text-[#C9A962]" : "text-[#E8D5A3]/80"}`}
-                    >
-                      {p.name}
-                    </span>
-                    <span className="text-[#C9A962] font-display text-xl">{p.score}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 h-1.5 rounded-full bg-[#2D1F1A] overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all"
-                        style={{
-                          width: `${pct}%`,
-                          background: i === 0 ? "#C9A962" : "#6B2D3C",
-                        }}
-                      />
-                    </div>
-                    <span className="text-[#F5EFE0]/40 text-xs">
-                      {p.wins} {p.wins === 1 ? "win" : "wins"}
-                    </span>
-                  </div>
+        {/* Leaderboard */}
+        <div className="space-y-3 mb-6">
+          {sorted.map((p, i) => {
+            const pct = totalPts ? Math.round((p.score / totalPts) * 100) : 0;
+            const medals = ["🥇", "🥈", "🥉"];
+            return (
+              <div
+                key={p.name}
+                className={`rounded-2xl p-4 ${
+                  i === 0
+                    ? "bg-[#C9A962]/10 border border-[#C9A962]/30"
+                    : "bg-[#2D1F1A]/50 border border-[#C9A962]/10"
+                }`}
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-xl w-8">{medals[i] || `#${i + 1}`}</span>
+                  <span
+                    className={`flex-1 font-medium ${i === 0 ? "text-[#C9A962]" : "text-[#E8D5A3]/80"}`}
+                  >
+                    {p.name}
+                  </span>
+                  <span className="text-[#C9A962] font-display text-xl">{p.score}</span>
                 </div>
-              );
-            })}
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { v: gameStats.roundsPlayed, l: "Rounds" },
-              { v: players.length, l: "Seekers" },
-              { v: mode === "advanced" ? "Depth" : "Simple", l: "Mode" },
-            ].map((s, i) => (
-              <div key={i} className="text-center p-4 rounded-xl bg-[#2D1F1A]/40 border border-[#C9A962]/10">
-                <div className="text-[#C9A962] font-display text-xl">{s.v}</div>
-                <div className="text-[#F5EFE0]/40 text-xs mt-1">{s.l}</div>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-1.5 rounded-full bg-[#2D1F1A] overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{
+                        width: `${pct}%`,
+                        background: i === 0 ? "#C9A962" : "#6B2D3C",
+                      }}
+                    />
+                  </div>
+                  <span className="text-[#F5EFE0]/40 text-xs">
+                    {p.wins} {p.wins === 1 ? "win" : "wins"}
+                  </span>
+                </div>
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
 
-        {/* Sticky footer */}
-        <div className="shrink-0 p-6 pt-4 bg-gradient-to-t from-[#1A1412] via-[#1A1412] to-transparent">
-          <div className="space-y-3">
-            <Button
-              onClick={() => {
-                setPlayers(players.map((p) => ({ ...p, score: 0, wins: 0 })));
-                setScreen("settings");
-              }}
-            >
-              Journey Again
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setScreen("home");
-                setPlayers([]);
-                setNames(["", "", ""]);
-              }}
-            >
-              New Gathering
-            </Button>
-          </div>
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { v: gameStats.roundsPlayed, l: "Rounds" },
+            { v: players.length, l: "Seekers" },
+            { v: mode === "advanced" ? "Depth" : "Simple", l: "Mode" },
+          ].map((s, i) => (
+            <div key={i} className="text-center p-4 rounded-xl bg-[#2D1F1A]/40 border border-[#C9A962]/10">
+              <div className="text-[#C9A962] font-display text-xl">{s.v}</div>
+              <div className="text-[#F5EFE0]/40 text-xs mt-1">{s.l}</div>
+            </div>
+          ))}
         </div>
-      </div>
+      </GameScreen>
     );
   }
 
