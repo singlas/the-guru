@@ -142,51 +142,56 @@ export function Rules({ onDone }) {
 
   return (
     <div
-      className="min-h-screen p-6 flex flex-col"
+      className="h-full flex flex-col"
       style={{
         background: "linear-gradient(180deg, #1A1412 0%, #2D1F1A 50%, #1A1412 100%)",
       }}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <h2 className="font-display text-2xl text-[#C9A962]">{pages[page].title}</h2>
-        <div className="flex gap-2">
-          {pages.map((_, i) => (
-            <div
-              key={i}
-              className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                i === page ? "bg-[#C9A962] w-6" : "bg-[#C9A962]/30"
-              }`}
-            />
-          ))}
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto p-6 pb-0">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="font-display text-2xl text-[#C9A962]">{pages[page].title}</h2>
+          <div className="flex gap-2">
+            {pages.map((_, i) => (
+              <div
+                key={i}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  i === page ? "bg-[#C9A962] w-6" : "bg-[#C9A962]/30"
+                }`}
+              />
+            ))}
+          </div>
         </div>
+
+        {/* Content */}
+        <div>{pages[page].body}</div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1">{pages[page].body}</div>
-
-      {/* Navigation */}
-      <div className="flex gap-3 mt-8">
-        {page > 0 && (
-          <Button variant="secondary" onClick={() => setPage(page - 1)} className="flex-1">
-            Back
-          </Button>
-        )}
-        {page < pages.length - 1 ? (
-          <Button onClick={() => setPage(page + 1)} className="flex-1">
-            Continue
-          </Button>
-        ) : (
-          <Button
-            onClick={() => {
-              markRulesSeen();
-              onDone();
-            }}
-            className="flex-1"
-          >
-            Begin the Journey
-          </Button>
-        )}
+      {/* Sticky footer */}
+      <div className="shrink-0 p-6 bg-gradient-to-t from-[#1A1412] via-[#1A1412] to-transparent">
+        <div className="flex gap-3">
+          {page > 0 && (
+            <Button variant="secondary" onClick={() => setPage(page - 1)} className="flex-1">
+              Back
+            </Button>
+          )}
+          {page < pages.length - 1 ? (
+            <Button onClick={() => setPage(page + 1)} className="flex-1">
+              Continue
+            </Button>
+          ) : (
+            <Button
+              onClick={() => {
+                markRulesSeen();
+                onDone();
+              }}
+              className="flex-1"
+            >
+              Begin the Journey
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
