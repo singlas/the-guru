@@ -33,7 +33,6 @@ export default function App() {
   const [rIdx, setRIdx] = useState(0);
   const [winner, setWinner] = useState(null);
   const [gameStats, setGameStats] = useState({ roundsPlayed: 0, catsUsed: [] });
-  const [showCustom, setShowCustom] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState(null);
   const [speedWisdom, setSpeedWisdom] = useState(false);
   const [reflectiveMode, setReflectiveMode] = useState(false);
@@ -42,6 +41,7 @@ export default function App() {
   const [timerSeconds, setTimerSeconds] = useState(60);
   const [showHindi, setShowHindi] = useState(false); // Synchronized flip state for cards
   const [selectedCardIdx, setSelectedCardIdx] = useState(null); // Selected card in guruTurn
+  const [selectedWinnerIdx, setSelectedWinnerIdx] = useState(null); // Selected winner in seekerPick
   const gOrder = useRef([]);
 
   const startGame = () => {
@@ -83,6 +83,7 @@ export default function App() {
     setTimerSeconds(60);
     setShowHindi(false);
     setSelectedCardIdx(null);
+    setSelectedWinnerIdx(null);
   };
 
   const confirmCardSelection = () => {
@@ -107,12 +108,15 @@ export default function App() {
     }
   };
 
-  const pickWinner = (gpi) => {
+  const confirmWinner = () => {
+    if (selectedWinnerIdx === null) return;
+    const gpi = gOrder.current[selectedWinnerIdx];
     const pts = mode === "advanced" ? curS.score : 1;
     setPlayers((p) =>
       p.map((pl, i) => (i === gpi ? { ...pl, score: pl.score + pts, wins: pl.wins + 1 } : pl))
     );
     setWinner(gpi);
+    setSelectedWinnerIdx(null);
     setPhase("scoreUpdate");
     setGameStats((s) => ({ ...s, roundsPlayed: s.roundsPlayed + 1 }));
   };
@@ -577,7 +581,7 @@ export default function App() {
         icon: "⚡",
         color: "#EAB308", // Yellow - Relationships
         mode: "simple",
-        rounds: players.length,
+        rounds: 3,
         cats: ["Personal Dilemmas", "Relationship Situations", "Mind & Emotions", "Family & Parenting"],
       },
       {
@@ -652,31 +656,8 @@ export default function App() {
             })}
           </div>
 
-          {/* Divider */}
-          <div className="flex items-center gap-3 my-5">
-            <div className="flex-1 h-px bg-[#C9A962]/15" />
-            <span className="text-[#C9A962]/30 text-xs">or</span>
-            <div className="flex-1 h-px bg-[#C9A962]/15" />
-          </div>
-
-          {/* Custom toggle */}
-          <button
-            onClick={() => {
-              setShowCustom(!showCustom);
-              if (!showCustom) setSelectedPreset(null);
-            }}
-            className={`w-full text-center text-sm py-3 transition-colors rounded-xl border ${
-              showCustom || !selectedPreset
-                ? "text-[#C9A962] border-[#C9A962]/30 bg-[#C9A962]/5"
-                : "text-[#C9A962]/60 border-transparent hover:text-[#C9A962]"
-            }`}
-          >
-            {showCustom ? "Hide custom options ▲" : "Customize settings ▼"}
-          </button>
-
-          {/* Custom Settings */}
-          {showCustom && (
-            <div className="mt-4 pt-4 border-t border-[#C9A962]/15">
+          {/* Custom Settings - Always visible */}
+          <div className="mt-6 pt-4 border-t border-[#C9A962]/15">
               {/* Game Mode */}
               <p className="text-[#E8D5A3] text-sm font-medium mb-3">Scoring</p>
               <div className="flex gap-3 mb-5">
@@ -741,9 +722,8 @@ export default function App() {
                 {scenarioCount} scenarios available
               </p>
             </div>
-          )}
 
-          {/* Game Variants - Always visible */}
+          {/* Game Variants */}
           <div className="mt-4 pt-4 border-t border-[#C9A962]/10">
             <p className="text-[#E8D5A3] text-sm font-medium mb-3">Game Variants</p>
 
@@ -813,20 +793,12 @@ export default function App() {
 
         {/* Sticky footer */}
         <div className="shrink-0 p-6 pt-4 bg-gradient-to-t from-[#1A1412] via-[#1A1412] to-transparent">
-          <Button
-            onClick={startWithSettings}
-            disabled={!selectedPreset && !showCustom}
-          >
+          <Button onClick={startWithSettings}>
             {selectedPreset
               ? `Begin ${presets.find(p => p.key === selectedPreset)?.label}`
               : "Enter the GitaVerse"
             }
           </Button>
-          {!selectedPreset && !showCustom && (
-            <p className="text-center text-[#F5EFE0]/40 text-xs mt-3">
-              Select a path or customize settings to begin
-            </p>
-          )}
         </div>
       </div>
     );
@@ -1011,7 +983,7 @@ export default function App() {
           title="Wisdom Revealed"
           instruction={`${rg.name}, explain how this wisdom addresses the dilemma`}
           primaryAction={{
-            label: rIdx < gOrder.current.length - 1 ? "Hear Next Guru" : "Pass to Seeker",
+            label: rIdx < gOrder.current.length - 1 ? "Hear Next Guru" : `Pass to ${seeker.name}`,
             onClick: handleNextGuru
           }}
         >
@@ -1046,12 +1018,20 @@ export default function App() {
 
     // Seeker Pick
     if (phase === "seekerPick") {
+      const selectedGuruName = selectedWinnerIdx !== null
+        ? players[gOrder.current[selectedWinnerIdx]].name
+        : null;
+
       return (
         <GameScreen
           roundInfo={`Round ${rNum} of ${mr}`}
           topRightContent={`${seeker.name}'s choice`}
           title="Seeker's Choice"
-          instruction="Whose wisdom resonated most? Tap to award the round"
+          instruction="Whose wisdom resonated most deeply?"
+          primaryAction={selectedWinnerIdx !== null ? {
+            label: `Award to ${selectedGuruName}`,
+            onClick: confirmWinner
+          } : null}
         >
           {/* Scenario reminder - controls flip for all cards */}
           <div className="mb-4">
@@ -1066,9 +1046,16 @@ export default function App() {
             />
           </div>
 
+          {/* Divider with instruction */}
+          <div className="flex items-center gap-3 my-4">
+            <div className="flex-1 h-px bg-[#C9A962]/20" />
+            <span className="text-[#C9A962]/60 text-xs uppercase tracking-wider">Choose the wisest</span>
+            <div className="flex-1 h-px bg-[#C9A962]/20" />
+          </div>
+
           {/* Guru wisdom cards - follow scenario flip */}
           <div className="space-y-3">
-            {gOrder.current.map((gi) => {
+            {gOrder.current.map((gi, idx) => {
               const g = players[gi];
               const card = sels[gi];
               return (
@@ -1076,9 +1063,10 @@ export default function App() {
                   key={gi}
                   wisdom={card}
                   isSelectable={true}
+                  isSelected={selectedWinnerIdx === idx}
                   size="review"
                   guruName={g.name}
-                  onClick={() => pickWinner(gi)}
+                  onClick={() => setSelectedWinnerIdx(selectedWinnerIdx === idx ? null : idx)}
                   syncFlipped={showHindi}
                 />
               );
@@ -1092,15 +1080,17 @@ export default function App() {
     if (phase === "scoreUpdate") {
       const wp = players[winner];
       const pts = mode === "advanced" ? curS.score : 1;
+      const isFinalRound = rNum >= (rounds || players.length * 2);
+
       return (
         <GameScreen
           roundInfo={`Round ${rNum} of ${mr}`}
           topRightContent={`+${pts} ${pts === 1 ? "point" : "points"}`}
-          title="Round Complete"
+          title={isFinalRound ? "The Last Word" : "Round Complete"}
           instruction={`${wp.name} wins this round with the wisest counsel`}
           contentCentered
           primaryAction={{
-            label: rNum >= (rounds || players.length * 2) ? "Final Wisdom" : "Next Round",
+            label: isFinalRound ? "Final Wisdom" : "Next Round",
             onClick: nextRound
           }}
         >
@@ -1137,6 +1127,13 @@ export default function App() {
                 </div>
               ))}
           </div>
+
+          {/* Final round teaser */}
+          {isFinalRound && (
+            <p className="text-[#C9A962]/60 text-sm italic mt-6">
+              See who earned the title of Wisest Guru →
+            </p>
+          )}
         </GameScreen>
       );
     }
@@ -1146,7 +1143,37 @@ export default function App() {
   if (screen === "gameover") {
     const sorted = [...players].sort((a, b) => b.score - a.score);
     const champ = sorted[0];
-    const totalPts = players.reduce((s, p) => s + p.score, 0);
+    const maxScore = sorted[0]?.score || 0;
+    const wisdomCardsPlayed = gameStats.roundsPlayed * (players.length - 1);
+
+    // Calculate ranks with ties
+    const getRank = (player, index) => {
+      if (index === 0) return 1;
+      // If same score as previous player, same rank
+      if (player.score === sorted[index - 1].score) {
+        return getRank(sorted[index - 1], index - 1);
+      }
+      return index + 1;
+    };
+
+    // Check if player is tied with others
+    const isTied = (player) => {
+      return sorted.filter(p => p.score === player.score).length > 1;
+    };
+
+    // Rank badge colors
+    const rankColors = {
+      1: "#C9A962", // Gold
+      2: "#A0A0A0", // Silver
+      3: "#CD7F32", // Bronze
+    };
+
+    // Progress bar opacity based on rank
+    const barOpacity = {
+      1: "100%",
+      2: "60%",
+      3: "40%",
+    };
 
     return (
       <GameScreen
@@ -1176,30 +1203,49 @@ export default function App() {
             <SacredLotus size={80} />
           </div>
           <p className="font-display text-3xl text-[#E8D5A3]">{champ.name}</p>
-          <p className="text-[#C9A962] text-lg mt-1">{champ.score} points</p>
+          <p className="text-[#C9A962]/70 text-sm italic mt-1">Ultimate Wisdom Seeker</p>
         </div>
 
         {/* Leaderboard */}
         <div className="space-y-3 mb-6">
           {sorted.map((p, i) => {
-            const pct = totalPts ? Math.round((p.score / totalPts) * 100) : 0;
-            const medals = ["🥇", "🥈", "🥉"];
+            const rank = getRank(p, i);
+            const tied = isTied(p);
+            const pct = maxScore ? Math.round((p.score / maxScore) * 100) : 0;
+            const rankColor = rankColors[rank] || "#C9A962";
+            const opacity = barOpacity[rank] || "40%";
+
             return (
               <div
                 key={p.name}
                 className={`rounded-2xl p-4 ${
-                  i === 0
+                  rank === 1
                     ? "bg-[#C9A962]/10 border border-[#C9A962]/30"
                     : "bg-[#2D1F1A]/50 border border-[#C9A962]/10"
                 }`}
               >
                 <div className="flex items-center gap-3 mb-2">
-                  <span className="text-xl w-8">{medals[i] || `#${i + 1}`}</span>
+                  {/* Rank badge - SVG circle with number */}
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
+                    style={{
+                      backgroundColor: `${rankColor}20`,
+                      border: `2px solid ${rankColor}`,
+                      color: rankColor,
+                    }}
+                  >
+                    {rank}
+                  </div>
                   <span
-                    className={`flex-1 font-medium ${i === 0 ? "text-[#C9A962]" : "text-[#E8D5A3]/80"}`}
+                    className={`flex-1 font-medium ${rank === 1 ? "text-[#C9A962]" : "text-[#E8D5A3]/80"}`}
                   >
                     {p.name}
                   </span>
+                  {tied && (
+                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-[#C9A962]/20 text-[#C9A962]/80 uppercase tracking-wider">
+                      Tied
+                    </span>
+                  )}
                   <span className="text-[#C9A962] font-display text-xl">{p.score}</span>
                 </div>
                 <div className="flex items-center gap-3">
@@ -1208,7 +1254,8 @@ export default function App() {
                       className="h-full rounded-full transition-all"
                       style={{
                         width: `${pct}%`,
-                        background: i === 0 ? "#C9A962" : "#6B2D3C",
+                        backgroundColor: "#C9A962",
+                        opacity: opacity,
                       }}
                     />
                   </div>
@@ -1222,15 +1269,16 @@ export default function App() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-4 gap-2">
           {[
             { v: gameStats.roundsPlayed, l: "Rounds" },
             { v: players.length, l: "Seekers" },
+            { v: wisdomCardsPlayed, l: "Cards Played" },
             { v: mode === "advanced" ? "Depth" : "Simple", l: "Mode" },
           ].map((s, i) => (
-            <div key={i} className="text-center p-4 rounded-xl bg-[#2D1F1A]/40 border border-[#C9A962]/10">
-              <div className="text-[#C9A962] font-display text-xl">{s.v}</div>
-              <div className="text-[#F5EFE0]/40 text-xs mt-1">{s.l}</div>
+            <div key={i} className="text-center p-3 rounded-xl bg-[#2D1F1A]/40 border border-[#C9A962]/10">
+              <div className="text-[#C9A962] font-display text-lg">{s.v}</div>
+              <div className="text-[#F5EFE0]/40 text-[10px] mt-1">{s.l}</div>
             </div>
           ))}
         </div>
