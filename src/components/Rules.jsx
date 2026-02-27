@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { markRulesSeen } from "../utils/helpers";
-
-const BG = "linear-gradient(180deg,#1B1B2F,#162447)";
-const BTN = "linear-gradient(135deg,#F59E0B,#D97706)";
+import { Button } from "./Button";
+import { SacredLotus, SacredDivider } from "./Patterns";
 
 export function Rules({ onDone }) {
   const [page, setPage] = useState(0);
@@ -11,42 +10,70 @@ export function Rules({ onDone }) {
     {
       title: "Welcome",
       body: (
-        <div className="space-y-4">
-          <p className="text-slate-300 text-sm leading-relaxed">
-            The Guru is a card game where ancient wisdom meets modern life. Players take turns as{" "}
-            <span className="text-amber-400 font-semibold">Seekers</span> presenting real-world
-            dilemmas. The other players — the{" "}
-            <span className="text-amber-400 font-semibold">Wise Gurus</span> — respond using wisdom
-            cards from the Bhagavad Gita.
+        <div className="space-y-6">
+          <p className="text-[#F5EFE0]/80 leading-relaxed">
+            <span className="font-display text-xl text-[#E8D5A3]">The Guru</span> is a card game
+            where ancient wisdom meets modern life. Players take turns as{" "}
+            <span className="text-[#C9A962] font-medium">Seekers</span> presenting real-world
+            dilemmas while{" "}
+            <span className="text-[#C9A962] font-medium">Wise Gurus</span> respond with
+            teachings from the Bhagavad Gita.
           </p>
-          <p className="text-slate-300 text-sm leading-relaxed">
-            No prior knowledge of the Gita is needed. Just a willingness to think, listen, and have
-            fun with family and friends.
+          <p className="text-[#F5EFE0]/60 leading-relaxed">
+            No prior knowledge of the Gita is needed. Just a willingness to think, listen, and
+            share wisdom with family and friends.
           </p>
-          <div className="flex items-center gap-3 mt-4 p-3 rounded-lg bg-slate-800/40">
-            <span className="text-2xl">3–8</span>
-            <span className="text-slate-400 text-sm">Players</span>
-            <span className="text-2xl ml-4">20'</span>
-            <span className="text-slate-400 text-sm">Average game</span>
+          <div className="flex items-center justify-center gap-8 mt-8 py-5 rounded-2xl bg-[#2D1F1A]/40 border border-[#C9A962]/10">
+            <div className="text-center">
+              <span className="font-display text-3xl text-[#C9A962]">3–8</span>
+              <p className="text-[#F5EFE0]/50 text-sm mt-1">Players</p>
+            </div>
+            <div className="w-px h-10 bg-[#C9A962]/20" />
+            <div className="text-center">
+              <span className="font-display text-3xl text-[#C9A962]">~20</span>
+              <p className="text-[#F5EFE0]/50 text-sm mt-1">Minutes</p>
+            </div>
           </div>
         </div>
       ),
     },
     {
-      title: "How It Works",
+      title: "The Path",
       body: (
-        <div className="space-y-3">
+        <div className="space-y-5">
           {[
-            ["1", "The Seeker draws a scenario card and reads it aloud to the group."],
-            ["2", "Phone is passed to each Guru privately. They pick one wisdom card from their hand of 5."],
-            ["3", "All picks are revealed. Each Guru verbally explains how their chosen wisdom solves the dilemma."],
-            ["4", "The Seeker awards the round to the Guru with the most insightful response."],
-          ].map(([num, text]) => (
-            <div key={num} className="flex gap-3 items-start">
-              <div className="w-7 h-7 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 text-sm font-bold shrink-0">
+            {
+              num: "१",
+              title: "The Seeker Speaks",
+              desc: "Draw a scenario card and read your dilemma aloud to the group.",
+            },
+            {
+              num: "२",
+              title: "Gurus Contemplate",
+              desc: "Pass the phone to each Guru privately. They select one wisdom card from their hand.",
+            },
+            {
+              num: "३",
+              title: "Wisdom Revealed",
+              desc: "Each Guru shares their chosen verse and explains how it addresses the dilemma.",
+            },
+            {
+              num: "४",
+              title: "Seeker's Choice",
+              desc: "Award the round to the Guru whose wisdom resonated most deeply.",
+            },
+          ].map(({ num, title, desc }, i) => (
+            <div
+              key={i}
+              className="flex gap-4 items-start p-4 rounded-xl bg-[#2D1F1A]/30 border border-[#C9A962]/10"
+            >
+              <div className="w-10 h-10 rounded-full bg-[#6B2D3C]/40 border border-[#C9A962]/30 flex items-center justify-center text-[#C9A962] font-display text-lg shrink-0">
                 {num}
               </div>
-              <p className="text-slate-300 text-sm leading-relaxed">{text}</p>
+              <div>
+                <p className="text-[#E8D5A3] font-medium mb-1">{title}</p>
+                <p className="text-[#F5EFE0]/60 text-sm leading-relaxed">{desc}</p>
+              </div>
             </div>
           ))}
         </div>
@@ -55,51 +82,58 @@ export function Rules({ onDone }) {
     {
       title: "Scoring",
       body: (
-        <div className="space-y-4">
-          <div className="p-3 rounded-lg bg-slate-800/40">
-            <p className="text-amber-400 text-sm font-semibold mb-1">Simple Mode</p>
-            <p className="text-slate-300 text-sm">Each scenario won = 1 point. Most points wins.</p>
-          </div>
-          <div className="p-3 rounded-lg bg-slate-800/40">
-            <p className="text-amber-400 text-sm font-semibold mb-1">Advanced Mode (Scored)</p>
-            <p className="text-slate-300 text-sm">
-              Each scenario has a difficulty score (1–5 points). Harder dilemmas are worth more.
-              Total points wins.
+        <div className="space-y-6">
+          <div className="p-5 rounded-2xl bg-[#2D1F1A]/40 border border-[#C9A962]/15">
+            <p className="text-[#C9A962] font-display text-lg mb-2">Simple Mode</p>
+            <p className="text-[#F5EFE0]/70 text-sm leading-relaxed">
+              Each scenario won earns 1 point. The player with the most points at the end
+              becomes the ultimate Wisdom Seeker.
             </p>
           </div>
-          <div className="grid grid-cols-5 gap-1 mt-2">
-            {[
-              { s: 1, l: "Easy", c: "#6EE7B7" },
-              { s: 2, l: "Simple", c: "#A7F3D0" },
-              { s: 3, l: "Medium", c: "#FCD34D" },
-              { s: 4, l: "Hard", c: "#FCA5A5" },
-              { s: 5, l: "Deep", c: "#F87171" },
-            ].map((x) => (
-              <div key={x.s} className="text-center p-2 rounded-lg" style={{ background: x.c + "20" }}>
-                <div className="text-lg font-bold" style={{ color: x.c }}>
-                  {x.s}
+          <div className="p-5 rounded-2xl bg-[#2D1F1A]/40 border border-[#C9A962]/15">
+            <p className="text-[#C9A962] font-display text-lg mb-2">Advanced Mode</p>
+            <p className="text-[#F5EFE0]/70 text-sm leading-relaxed mb-4">
+              Each scenario has a depth score from 1 to 5. Deeper dilemmas reward more points.
+            </p>
+            <div className="flex justify-between gap-2">
+              {[
+                { s: 1, l: "Light" },
+                { s: 2, l: "Clear" },
+                { s: 3, l: "Deep" },
+                { s: 4, l: "Profound" },
+                { s: 5, l: "Sacred" },
+              ].map((x) => (
+                <div
+                  key={x.s}
+                  className="flex-1 text-center py-3 rounded-xl bg-[#6B2D3C]/20 border border-[#C9A962]/10"
+                >
+                  <div className="font-display text-xl text-[#C9A962]">{x.s}</div>
+                  <div className="text-[#F5EFE0]/40 text-xs mt-1">{x.l}</div>
                 </div>
-                <div className="text-xs text-slate-400">{x.l}</div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       ),
     },
     {
-      title: "Tips",
+      title: "Wisdom",
       body: (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {[
-            "✨ There's no 'correct' answer. The Seeker picks whoever resonates most with them.",
-            "🔄 Wisdom cards get recycled when the deck runs out, so the same verse can appear in new contexts.",
-            "🎭 Try the 'Anonymous' variant: Gurus submit cards face-down so the Seeker doesn't know who played what.",
-            "⏱️ For faster games, set a 30-second limit for Guru explanations.",
-            "💡 The game is most fun when Gurus get creative with how they connect the wisdom to the scenario.",
+            "There is no 'correct' answer. The Seeker chooses whoever resonates most with their heart.",
+            "Wisdom cards cycle back when the deck empties, allowing verses to find new contexts.",
+            "Try playing anonymously — Gurus submit cards face-down so the Seeker judges wisdom alone.",
+            "For swifter games, give Gurus 30 breaths to share their insight.",
+            "The deepest joy comes when Gurus weave creative connections between ancient words and present moments.",
           ].map((text, i) => (
-            <p key={i} className="text-slate-300 text-sm leading-relaxed">
-              {text}
-            </p>
+            <div
+              key={i}
+              className="flex gap-3 items-start"
+            >
+              <span className="text-[#C9A962]/60 mt-1.5">◆</span>
+              <p className="text-[#F5EFE0]/70 text-sm leading-relaxed">{text}</p>
+            </div>
           ))}
         </div>
       ),
@@ -107,49 +141,51 @@ export function Rules({ onDone }) {
   ];
 
   return (
-    <div className="min-h-screen p-5 flex flex-col" style={{ background: BG }}>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-amber-400" style={{ fontFamily: "Georgia,serif" }}>
-          {pages[page].title}
-        </h2>
-        <div className="flex gap-1">
+    <div
+      className="min-h-screen p-6 flex flex-col"
+      style={{
+        background: "linear-gradient(180deg, #1A1412 0%, #2D1F1A 50%, #1A1412 100%)",
+      }}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <h2 className="font-display text-2xl text-[#C9A962]">{pages[page].title}</h2>
+        <div className="flex gap-2">
           {pages.map((_, i) => (
             <div
               key={i}
-              className={`w-2 h-2 rounded-full ${i === page ? "bg-amber-400" : "bg-slate-700"}`}
+              className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                i === page ? "bg-[#C9A962] w-6" : "bg-[#C9A962]/30"
+              }`}
             />
           ))}
         </div>
       </div>
+
+      {/* Content */}
       <div className="flex-1">{pages[page].body}</div>
-      <div className="flex gap-3 mt-6">
+
+      {/* Navigation */}
+      <div className="flex gap-3 mt-8">
         {page > 0 && (
-          <button
-            onClick={() => setPage(page - 1)}
-            className="flex-1 py-3 rounded-xl border border-slate-700 text-slate-400"
-          >
+          <Button variant="secondary" onClick={() => setPage(page - 1)} className="flex-1">
             Back
-          </button>
+          </Button>
         )}
         {page < pages.length - 1 ? (
-          <button
-            onClick={() => setPage(page + 1)}
-            className="flex-1 py-4 rounded-xl text-lg font-semibold text-slate-900"
-            style={{ background: BTN }}
-          >
-            Next
-          </button>
+          <Button onClick={() => setPage(page + 1)} className="flex-1">
+            Continue
+          </Button>
         ) : (
-          <button
+          <Button
             onClick={() => {
               markRulesSeen();
               onDone();
             }}
-            className="flex-1 py-4 rounded-xl text-lg font-semibold text-slate-900"
-            style={{ background: BTN }}
+            className="flex-1"
           >
-            Got it, let's play!
-          </button>
+            Begin the Journey
+          </Button>
         )}
       </div>
     </div>
