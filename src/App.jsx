@@ -528,21 +528,30 @@ export default function App() {
         if (s.size > 3) s.delete(c);
       } else s.add(c);
       setCats(s);
+      setSelectedPreset(null); // Clear preset when manually changing
     };
     const scenarioCount = SCENARIOS.filter((s) => cats.has(s.cat)).length;
 
-    // Apply preset settings (doesn't start game immediately anymore)
-    const selectPreset = (presetKey, presetMode, presetRounds, presetCats, scoreFilter = null) => {
+    // Apply preset settings
+    const selectPreset = (presetKey, presetMode, presetRounds, presetCats) => {
       setSelectedPreset(presetKey);
       setMode(presetMode);
       setRounds(presetRounds);
       setCats(new Set(presetCats));
-      setShowCustom(false);
+    };
+
+    // Manual changes clear preset selection
+    const updateRounds = (newRounds) => {
+      setRounds(newRounds);
+      setSelectedPreset(null);
+    };
+    const updateMode = (newMode) => {
+      setMode(newMode);
+      setSelectedPreset(null);
     };
 
     // Start game with current settings
     const startWithSettings = () => {
-      // Filter scenarios by category and optionally by score (for kid-friendly)
       let filteredScenarios = SCENARIOS.filter((s) => cats.has(s.cat));
       if (selectedPreset === "kids") {
         filteredScenarios = filteredScenarios.filter((s) => s.score <= 2);
@@ -577,9 +586,9 @@ export default function App() {
       {
         key: "quick",
         label: "Quick Game",
-        desc: "Simple scoring, 1 point per round",
+        subtitle: "3 rounds • Simple scoring",
         icon: "⚡",
-        color: "#EAB308", // Yellow - Relationships
+        color: "#EAB308",
         mode: "simple",
         rounds: 3,
         cats: ["Personal Dilemmas", "Relationship Situations", "Mind & Emotions", "Family & Parenting"],
@@ -587,9 +596,9 @@ export default function App() {
       {
         key: "kids",
         label: "Kid Friendly",
-        desc: "Easy scenarios, simple rules",
+        subtitle: `${Math.max(players.length, Math.min(players.length * 2, 8))} rounds • Easy scenarios`,
         icon: "🌟",
-        color: "#DB2777", // Pink - Family
+        color: "#DB2777",
         mode: "simple",
         rounds: Math.max(players.length, Math.min(players.length * 2, 8)),
         cats: ["Personal Dilemmas", "Relationship Situations", "Family & Parenting", "Mind & Emotions"],
@@ -597,9 +606,9 @@ export default function App() {
       {
         key: "deep",
         label: "Deep Contemplation",
-        desc: "Advanced scoring (1-5 pts), profound themes",
+        subtitle: `${players.length * 3} rounds • Advanced scoring`,
         icon: "🪷",
-        color: "#0D9488", // Teal - Spiritual
+        color: "#0D9488",
         mode: "advanced",
         rounds: players.length * 3,
         cats: ["Moral/Ethical Decisions", "Spiritual Growth", "Mind & Emotions", "Social Responsibility", "Wealth & Simplicity"],
@@ -615,85 +624,96 @@ export default function App() {
         <div className="flex-1 overflow-y-auto p-6 pb-4">
           <button
             onClick={() => setScreen("setup")}
-            className="text-[#C9A962]/60 text-sm hover:text-[#C9A962] transition-colors mb-6"
+            className="text-[#C9A962]/60 text-sm hover:text-[#C9A962] transition-colors mb-4"
           >
-            ← Return
+            ← Back
           </button>
 
-          <h2 className="font-display text-2xl text-[#C9A962] mb-2">Choose Your Path</h2>
-          <p className="text-[#F5EFE0]/40 text-sm italic mb-6">How deep will you go?</p>
-
-          {/* Preset Modes */}
-          <div className="space-y-3 mb-4">
+          {/* Quick Start Presets */}
+          <p className="text-[#E8D5A3] text-sm font-medium mb-3">Quick Start</p>
+          <div className="flex gap-2 mb-6">
             {presets.map((p) => {
               const isSelected = selectedPreset === p.key;
               return (
                 <button
                   key={p.key}
                   onClick={() => selectPreset(p.key, p.mode, p.rounds, p.cats)}
-                  className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left active:scale-[0.98] ${
+                  className={`flex-1 p-3 rounded-xl border-2 transition-all text-center active:scale-[0.98] ${
                     isSelected
-                      ? "border-[#C9A962] bg-[#C9A962]/10"
-                      : "border-[#C9A962]/15 bg-[#2D1F1A]/40 hover:border-[#C9A962]/30"
+                      ? "border-[#C9A962] bg-[#C9A962]/15"
+                      : "border-[#C9A962]/20 bg-[#2D1F1A]/40 hover:border-[#C9A962]/40"
                   }`}
-                  style={isSelected ? { boxShadow: `0 0 20px ${p.color}20` } : {}}
                 >
-                  {/* Radio indicator */}
-                  <div
-                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-                      isSelected ? "border-[#C9A962] bg-[#C9A962]" : "border-[#C9A962]/40"
-                    }`}
-                  >
-                    {isSelected && <div className="w-2 h-2 rounded-full bg-[#1A1412]" />}
-                  </div>
-                  <span className="text-2xl">{p.icon}</span>
-                  <div className="flex-1">
-                    <span className="block text-[#E8D5A3] font-medium">{p.label}</span>
-                    <span className="block text-[#F5EFE0]/40 text-xs mt-0.5">{p.desc}</span>
-                  </div>
+                  <span className="text-xl block mb-1">{p.icon}</span>
+                  <span className={`block text-xs font-medium ${isSelected ? "text-[#C9A962]" : "text-[#E8D5A3]/80"}`}>
+                    {p.label}
+                  </span>
                 </button>
               );
             })}
           </div>
 
-          {/* Custom Settings - Always visible */}
-          <div className="mt-6 pt-4 border-t border-[#C9A962]/15">
-              {/* Game Mode */}
-              <p className="text-[#E8D5A3] text-sm font-medium mb-3">Scoring</p>
-              <div className="flex gap-3 mb-5">
+          {/* Current Settings Summary */}
+          <div className="rounded-xl bg-[#2D1F1A]/60 border border-[#C9A962]/20 p-4 mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[#F5EFE0]/50 text-xs uppercase tracking-wider">Current Settings</span>
+              {selectedPreset && (
+                <span className="text-[9px] px-2 py-0.5 rounded-full bg-[#C9A962]/20 text-[#C9A962]">
+                  {presets.find(p => p.key === selectedPreset)?.label}
+                </span>
+              )}
+            </div>
+
+            {/* Rounds & Scoring Row */}
+            <div className="flex gap-3 mb-4">
+              {/* Rounds */}
+              <div className="flex-1 flex items-center justify-between bg-[#1A1412]/50 rounded-lg p-2">
+                <button
+                  onClick={() => updateRounds(Math.max(players.length, rounds - 1))}
+                  className="w-8 h-8 rounded-lg bg-[#C9A962]/10 text-[#C9A962] hover:bg-[#C9A962]/20 transition-colors flex items-center justify-center text-lg"
+                >
+                  −
+                </button>
+                <div className="text-center">
+                  <span className="font-display text-2xl text-[#C9A962]">{rounds}</span>
+                  <span className="text-[#F5EFE0]/40 text-[10px] block -mt-1">rounds</span>
+                </div>
+                <button
+                  onClick={() => updateRounds(Math.min(Math.min(scenarioCount, 30), rounds + 1))}
+                  className="w-8 h-8 rounded-lg bg-[#C9A962]/10 text-[#C9A962] hover:bg-[#C9A962]/20 transition-colors flex items-center justify-center text-lg"
+                >
+                  +
+                </button>
+              </div>
+
+              {/* Scoring */}
+              <div className="flex-1 flex bg-[#1A1412]/50 rounded-lg p-1">
                 {[
-                  { key: "simple", label: "Simple", desc: "1 pt each" },
-                  { key: "advanced", label: "Advanced", desc: "By depth" },
+                  { key: "simple", label: "Simple" },
+                  { key: "advanced", label: "Advanced" },
                 ].map((m) => (
                   <button
                     key={m.key}
-                    onClick={() => setMode(m.key)}
-                    className={`flex-1 py-3 rounded-xl text-center transition-all ${
+                    onClick={() => updateMode(m.key)}
+                    className={`flex-1 py-2 rounded-md text-xs font-medium transition-all ${
                       mode === m.key
-                        ? "bg-[#C9A962]/20 border-[#C9A962] text-[#E8D5A3] border"
-                        : "bg-[#2D1F1A]/40 border-[#C9A962]/20 text-[#F5EFE0]/50 border"
+                        ? "bg-[#C9A962]/20 text-[#C9A962]"
+                        : "text-[#F5EFE0]/40 hover:text-[#F5EFE0]/60"
                     }`}
                   >
-                    <span className="block font-medium text-sm">{m.label}</span>
+                    {m.label}
                   </button>
                 ))}
               </div>
+            </div>
 
-              {/* Rounds */}
-              <p className="text-[#E8D5A3] text-sm font-medium mb-3">Rounds</p>
-              <div className="flex items-center gap-4 mb-5">
-                <IconButton onClick={() => setRounds(Math.max(players.length, rounds - 1))}>−</IconButton>
-                <div className="text-center flex-1">
-                  <span className="font-display text-3xl text-[#C9A962]">{rounds}</span>
-                </div>
-                <IconButton onClick={() => setRounds(Math.min(Math.min(scenarioCount, 30), rounds + 1))}>+</IconButton>
+            {/* Categories as chips */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[#F5EFE0]/40 text-xs">Categories</span>
+                <span className="text-[#C9A962]/60 text-[10px]">{cats.size} selected • {scenarioCount} scenarios</span>
               </div>
-
-              {/* Categories */}
-              <p className="text-[#E8D5A3] text-sm font-medium mb-3">
-                Categories <span className="text-[#F5EFE0]/30">(3+ required)</span>
-              </p>
-              <div className="space-y-2 mb-4">
+              <div className="flex flex-wrap gap-1.5">
                 {CATEGORY_NAMES.map((c) => {
                   const cfg = CATEGORIES[c];
                   const sel = cats.has(c);
@@ -701,36 +721,30 @@ export default function App() {
                     <button
                       key={c}
                       onClick={() => tog(c)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left transition-all ${
+                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs transition-all ${
                         sel
-                          ? "border-[#C9A962]/30 bg-[#2D1F1A]/50"
-                          : "border-[#C9A962]/10 bg-[#2D1F1A]/20 opacity-50"
+                          ? "bg-[#C9A962]/15 border border-[#C9A962]/30"
+                          : "bg-[#1A1412]/50 border border-transparent opacity-40 hover:opacity-70"
                       }`}
                     >
-                      <span className="text-base" style={{ color: sel ? cfg.c : "#555" }}>
-                        {cfg.i}
-                      </span>
-                      <span className={`text-sm ${sel ? "text-[#E8D5A3]" : "text-[#F5EFE0]/40"}`}>
-                        {c}
+                      <span style={{ color: sel ? cfg.c : "#666" }}>{cfg.i}</span>
+                      <span className={sel ? "text-[#E8D5A3]" : "text-[#F5EFE0]/50"}>
+                        {c.split(" ")[0]}
                       </span>
                     </button>
                   );
                 })}
               </div>
-
-              <p className="text-center text-[#F5EFE0]/30 text-xs mb-4">
-                {scenarioCount} scenarios available
-              </p>
             </div>
+          </div>
 
           {/* Game Variants */}
-          <div className="mt-4 pt-4 border-t border-[#C9A962]/10">
-            <p className="text-[#E8D5A3] text-sm font-medium mb-3">Game Variants</p>
-
+          <p className="text-[#E8D5A3] text-sm font-medium mb-3">Optional Variants</p>
+          <div className="space-y-2">
             {/* Speed Wisdom Toggle */}
             <button
               onClick={() => setSpeedWisdom(!speedWisdom)}
-              className={`w-full flex items-center justify-between p-3 rounded-xl border mb-2 transition-all ${
+              className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${
                 speedWisdom
                   ? "border-[#C9A962]/40 bg-[#C9A962]/10"
                   : "border-[#C9A962]/15 bg-[#2D1F1A]/30"
@@ -742,7 +756,7 @@ export default function App() {
                   <span className={`block text-sm ${speedWisdom ? "text-[#E8D5A3]" : "text-[#F5EFE0]/60"}`}>
                     Speed Wisdom
                   </span>
-                  <span className="block text-[#F5EFE0]/40 text-xs">30-second timer for explanations</span>
+                  <span className="block text-[#F5EFE0]/40 text-xs">60-second timer for explanations</span>
                 </div>
               </div>
               <div
@@ -794,10 +808,7 @@ export default function App() {
         {/* Sticky footer */}
         <div className="shrink-0 p-6 pt-4 bg-gradient-to-t from-[#1A1412] via-[#1A1412] to-transparent">
           <Button onClick={startWithSettings}>
-            {selectedPreset
-              ? `Begin ${presets.find(p => p.key === selectedPreset)?.label}`
-              : "Enter the GitaVerse"
-            }
+            Begin Journey
           </Button>
         </div>
       </div>
@@ -838,6 +849,8 @@ export default function App() {
             syncFlipped={showHindi}
             onFlipChange={setShowHindi}
             showFlipHint
+            cardNumber={rNum}
+            totalCards={sDeck.length}
           />
         </GameScreen>
       );
@@ -893,6 +906,8 @@ export default function App() {
               syncFlipped={showHindi}
               onFlipChange={setShowHindi}
               showFlipHint
+              cardNumber={rNum}
+              totalCards={sDeck.length}
             />
           </div>
 
@@ -1007,6 +1022,8 @@ export default function App() {
               syncFlipped={showHindi}
               onFlipChange={setShowHindi}
               showFlipHint
+              cardNumber={rNum}
+              totalCards={sDeck.length}
             />
           </div>
 
@@ -1043,6 +1060,8 @@ export default function App() {
               syncFlipped={showHindi}
               onFlipChange={setShowHindi}
               showFlipHint
+              cardNumber={rNum}
+              totalCards={sDeck.length}
             />
           </div>
 

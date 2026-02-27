@@ -4,94 +4,108 @@ import { useState } from "react";
 const CategoryIcons = {
   "Personal Dilemmas": () => (
     <svg viewBox="0 0 64 64" className="w-full h-full">
-      <circle cx="32" cy="24" r="12" fill="currentColor" opacity="0.3"/>
-      <circle cx="32" cy="24" r="8" fill="none" stroke="currentColor" strokeWidth="2"/>
-      <path d="M20 44c0-8 5-12 12-12s12 4 12 12" fill="none" stroke="currentColor" strokeWidth="2"/>
-      <path d="M28 20 Q32 28 36 20" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+      <circle cx="32" cy="24" r="12" fill="currentColor" opacity="0.3" />
+      <circle cx="32" cy="24" r="8" fill="none" stroke="currentColor" strokeWidth="2" />
+      <path d="M20 44c0-8 5-12 12-12s12 4 12 12" fill="none" stroke="currentColor" strokeWidth="2" />
+      <path d="M28 20 Q32 28 36 20" fill="none" stroke="currentColor" strokeWidth="1.5" />
       <text x="32" y="58" textAnchor="middle" fill="currentColor" fontSize="8">?</text>
     </svg>
   ),
   "Professional Challenges": () => (
     <svg viewBox="0 0 64 64" className="w-full h-full">
-      <line x1="32" y1="12" x2="32" y2="52" stroke="currentColor" strokeWidth="2"/>
-      <line x1="12" y1="20" x2="52" y2="20" stroke="currentColor" strokeWidth="2"/>
-      <path d="M12 20 L12 32 L22 32 L22 20" fill="currentColor" opacity="0.3" stroke="currentColor" strokeWidth="1"/>
-      <path d="M42 20 L42 28 L52 28 L52 20" fill="currentColor" opacity="0.3" stroke="currentColor" strokeWidth="1"/>
-      <polyline points="16,28 20,24 24,30 28,22" fill="none" stroke="currentColor" strokeWidth="1.5"/>
-      <circle cx="47" cy="24" r="3" fill="currentColor" opacity="0.5"/>
-      <path d="M44 26 L50 26 L47 30 Z" fill="currentColor" opacity="0.5"/>
+      <line x1="32" y1="12" x2="32" y2="52" stroke="currentColor" strokeWidth="2" />
+      <line x1="12" y1="20" x2="52" y2="20" stroke="currentColor" strokeWidth="2" />
+      <path d="M12 20 L12 32 L22 32 L22 20" fill="currentColor" opacity="0.3" stroke="currentColor" strokeWidth="1" />
+      <path d="M42 20 L42 28 L52 28 L52 20" fill="currentColor" opacity="0.3" stroke="currentColor" strokeWidth="1" />
+      <polyline points="16,28 20,24 24,30 28,22" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="47" cy="24" r="3" fill="currentColor" opacity="0.5" />
+      <path d="M44 26 L50 26 L47 30 Z" fill="currentColor" opacity="0.5" />
     </svg>
   ),
   "Moral/Ethical Decisions": () => (
     <svg viewBox="0 0 64 64" className="w-full h-full">
-      <circle cx="32" cy="32" r="20" fill="none" stroke="currentColor" strokeWidth="2"/>
-      <path d="M32 12 L32 32 L46 42" fill="none" stroke="currentColor" strokeWidth="2"/>
-      <circle cx="32" cy="32" r="3" fill="currentColor"/>
-      <path d="M22 22 L26 26 M42 22 L38 26" stroke="currentColor" strokeWidth="1.5"/>
-      <path d="M20 38 Q32 48 44 38" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+      <circle cx="32" cy="32" r="20" fill="none" stroke="currentColor" strokeWidth="2" />
+      <path d="M32 12 L32 32 L46 42" fill="none" stroke="currentColor" strokeWidth="2" />
+      <circle cx="32" cy="32" r="3" fill="currentColor" />
+      <path d="M22 22 L26 26 M42 22 L38 26" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M20 38 Q32 48 44 38" fill="none" stroke="currentColor" strokeWidth="1.5" />
     </svg>
   ),
   "Relationship Situations": () => (
     <svg viewBox="0 0 64 64" className="w-full h-full">
-      <path d="M32 52 L16 32 Q16 16 32 20 Q48 16 48 32 L32 52" fill="currentColor" opacity="0.3" stroke="currentColor" strokeWidth="2"/>
-      <circle cx="24" cy="28" r="4" fill="currentColor" opacity="0.5"/>
-      <circle cx="40" cy="28" r="4" fill="currentColor" opacity="0.5"/>
+      <path d="M32 52 L16 32 Q16 16 32 20 Q48 16 48 32 L32 52" fill="currentColor" opacity="0.3" stroke="currentColor" strokeWidth="2" />
+      <circle cx="24" cy="28" r="4" fill="currentColor" opacity="0.5" />
+      <circle cx="40" cy="28" r="4" fill="currentColor" opacity="0.5" />
     </svg>
   ),
   "Mind & Emotions": () => (
     <svg viewBox="0 0 64 64" className="w-full h-full">
-      <ellipse cx="32" cy="28" rx="16" ry="14" fill="currentColor" opacity="0.2" stroke="currentColor" strokeWidth="2"/>
-      <path d="M24 24 Q28 20 32 24 Q36 28 40 24" fill="none" stroke="currentColor" strokeWidth="1.5"/>
-      <path d="M24 32 Q28 28 32 32 Q36 36 40 32" fill="none" stroke="currentColor" strokeWidth="1.5"/>
-      <circle cx="20" cy="38" r="2" fill="currentColor" opacity="0.4"/>
-      <circle cx="44" cy="38" r="2" fill="currentColor" opacity="0.4"/>
-      <path d="M28 44 Q32 48 36 44" fill="none" stroke="currentColor" strokeWidth="1"/>
+      <ellipse cx="32" cy="28" rx="16" ry="14" fill="currentColor" opacity="0.2" stroke="currentColor" strokeWidth="2" />
+      <path d="M24 24 Q28 20 32 24 Q36 28 40 24" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M24 32 Q28 28 32 32 Q36 36 40 32" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="20" cy="38" r="2" fill="currentColor" opacity="0.4" />
+      <circle cx="44" cy="38" r="2" fill="currentColor" opacity="0.4" />
+      <path d="M28 44 Q32 48 36 44" fill="none" stroke="currentColor" strokeWidth="1" />
     </svg>
   ),
   "Spiritual Growth": () => (
     <svg viewBox="0 0 64 64" className="w-full h-full">
-      <circle cx="32" cy="32" r="18" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.3"/>
-      <circle cx="32" cy="32" r="12" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.5"/>
-      <circle cx="32" cy="32" r="6" fill="currentColor" opacity="0.3"/>
-      <path d="M32 8 L32 16 M32 48 L32 56 M8 32 L16 32 M48 32 L56 32" stroke="currentColor" strokeWidth="1.5"/>
-      <path d="M18 18 L24 24 M40 40 L46 46 M18 46 L24 40 M40 24 L46 18" stroke="currentColor" strokeWidth="1"/>
+      <circle cx="32" cy="32" r="18" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.3" />
+      <circle cx="32" cy="32" r="12" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.5" />
+      <circle cx="32" cy="32" r="6" fill="currentColor" opacity="0.3" />
+      <path d="M32 8 L32 16 M32 48 L32 56 M8 32 L16 32 M48 32 L56 32" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M18 18 L24 24 M40 40 L46 46 M18 46 L24 40 M40 24 L46 18" stroke="currentColor" strokeWidth="1" />
     </svg>
   ),
   "Wealth & Simplicity": () => (
     <svg viewBox="0 0 64 64" className="w-full h-full">
-      <circle cx="32" cy="32" r="16" fill="currentColor" opacity="0.2" stroke="currentColor" strokeWidth="2"/>
+      <circle cx="32" cy="32" r="16" fill="currentColor" opacity="0.2" stroke="currentColor" strokeWidth="2" />
       <text x="32" y="38" textAnchor="middle" fill="currentColor" fontSize="18" fontWeight="bold">₹</text>
-      <path d="M20 20 L18 18 M44 20 L46 18 M20 44 L18 46 M44 44 L46 46" stroke="currentColor" strokeWidth="1.5"/>
+      <path d="M20 20 L18 18 M44 20 L46 18 M20 44 L18 46 M44 44 L46 46" stroke="currentColor" strokeWidth="1.5" />
     </svg>
   ),
   "Family & Parenting": () => (
     <svg viewBox="0 0 64 64" className="w-full h-full">
-      <circle cx="22" cy="20" r="6" fill="currentColor" opacity="0.3" stroke="currentColor" strokeWidth="1.5"/>
-      <circle cx="42" cy="20" r="6" fill="currentColor" opacity="0.3" stroke="currentColor" strokeWidth="1.5"/>
-      <circle cx="32" cy="38" r="5" fill="currentColor" opacity="0.3" stroke="currentColor" strokeWidth="1.5"/>
-      <path d="M22 28 L22 32 L32 42 L42 32 L42 28" fill="none" stroke="currentColor" strokeWidth="1.5"/>
-      <path d="M16 50 Q22 44 28 50 M36 50 Q42 44 48 50" fill="none" stroke="currentColor" strokeWidth="1"/>
+      <circle cx="22" cy="20" r="6" fill="currentColor" opacity="0.3" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="42" cy="20" r="6" fill="currentColor" opacity="0.3" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="32" cy="38" r="5" fill="currentColor" opacity="0.3" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M22 28 L22 32 L32 42 L42 32 L42 28" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M16 50 Q22 44 28 50 M36 50 Q42 44 48 50" fill="none" stroke="currentColor" strokeWidth="1" />
     </svg>
   ),
   "Social Responsibility": () => (
     <svg viewBox="0 0 64 64" className="w-full h-full">
-      <circle cx="32" cy="32" r="18" fill="none" stroke="currentColor" strokeWidth="2"/>
-      <circle cx="26" cy="28" r="4" fill="currentColor" opacity="0.4"/>
-      <circle cx="38" cy="28" r="4" fill="currentColor" opacity="0.4"/>
-      <circle cx="32" cy="40" r="4" fill="currentColor" opacity="0.4"/>
-      <line x1="26" y1="32" x2="32" y2="36" stroke="currentColor" strokeWidth="1"/>
-      <line x1="38" y1="32" x2="32" y2="36" stroke="currentColor" strokeWidth="1"/>
-      <line x1="26" y1="28" x2="38" y2="28" stroke="currentColor" strokeWidth="1"/>
+      <circle cx="32" cy="32" r="18" fill="none" stroke="currentColor" strokeWidth="2" />
+      <circle cx="26" cy="28" r="4" fill="currentColor" opacity="0.4" />
+      <circle cx="38" cy="28" r="4" fill="currentColor" opacity="0.4" />
+      <circle cx="32" cy="40" r="4" fill="currentColor" opacity="0.4" />
+      <line x1="26" y1="32" x2="32" y2="36" stroke="currentColor" strokeWidth="1" />
+      <line x1="38" y1="32" x2="32" y2="36" stroke="currentColor" strokeWidth="1" />
+      <line x1="26" y1="28" x2="38" y2="28" stroke="currentColor" strokeWidth="1" />
     </svg>
   ),
 };
 
-// Flip icon component
+// Category-specific glow colors for the radial backdrop
+const CATEGORY_GLOW_COLORS = {
+  "Personal Dilemmas": "#1E3A8A",
+  "Professional Challenges": "#065F46",
+  "Moral/Ethical Decisions": "#991B1B",
+  "Relationship Situations": "#B45309",
+  "Mind & Emotions": "#5B21B6",
+  "Spiritual Growth": "#134E4A",
+  "Wealth & Simplicity": "#92400E",
+  "Family & Parenting": "#B45309",
+  "Social Responsibility": "#065F46",
+};
+
+// Flip icon component - gold at 50% opacity
 function FlipIcon({ light = false }) {
   return (
     <svg
       viewBox="0 0 24 24"
-      className={`w-4 h-4 ${light ? 'text-[#2D1F1A]/50' : 'text-[#C9A962]/60'}`}
+      className="w-4 h-4"
+      style={{ color: light ? 'rgba(45,31,26,0.5)' : 'rgba(201,169,98,0.5)' }}
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
@@ -157,7 +171,14 @@ export function ScenarioCard({
   syncFlipped = null, // null = uncontrolled, true/false = controlled
   onFlipChange = null, // callback when flip state changes (for sync mode)
   showFlipHint = false, // Show "Tap to show Hindi" hint in footer
+  cardNumber = null, // Current card number (1-indexed)
+  totalCards = null, // Total cards in deck
 }) {
+  // Map score to difficulty label
+  const getDifficulty = (score) => {
+    const labels = { 1: "Light", 2: "Easy", 3: "Moderate", 4: "Deep", 5: "Profound" };
+    return labels[score] || "Moderate";
+  };
   const [internalFlipped, setInternalFlipped] = useState(false);
 
   // Use controlled or uncontrolled flip state
@@ -174,23 +195,24 @@ export function ScenarioCard({
   const IconComponent = CategoryIcons[scenario.cat] || CategoryIcons["Personal Dilemmas"];
   const sizeConfig = CARD_SIZES[size];
   const catColor = category.c || "#C9A962";
+  const glowColor = CATEGORY_GLOW_COLORS[scenario.cat] || "#1E3A8A";
 
   return (
     <div
       className={`relative rounded-2xl overflow-hidden max-w-sm mx-auto w-full flex flex-col cursor-pointer select-none ${sizeConfig.minHeight}`}
       style={{
-        background: `linear-gradient(145deg, #2D1F1A 0%, #1A1412 50%, #251815 100%)`,
-        border: `3px solid ${catColor}50`,
-        boxShadow: `0 4px 20px rgba(0,0,0,0.4), 0 0 30px ${catColor}15`,
+        background: '#1A120B',
+        border: `1px solid ${catColor}25`,
+        boxShadow: `0 8px 32px rgba(0,0,0,0.6), 0 2px 8px ${catColor}10`,
       }}
       onClick={toggleFlip}
     >
-      {/* Top strip: category (static) + flip icon */}
+      {/* Top strip: category + score circle + flip icon */}
       <div
         className={`shrink-0 flex items-center justify-between ${sizeConfig.headerPadding}`}
         style={{
-          background: `linear-gradient(90deg, ${catColor}25, ${catColor}15, ${catColor}25)`,
-          borderBottom: `1px solid ${catColor}30`
+          background: 'rgba(26,18,11,0.9)',
+          borderBottom: `1px solid ${catColor}`
         }}
       >
         <span
@@ -199,27 +221,36 @@ export function ScenarioCard({
         >
           {scenario.cat}
         </span>
-        <div className="flex items-center gap-2">
-          {mode === "advanced" && <PointsBadge points={scenario.score} />}
-          <button
-            className="p-1 rounded hover:bg-white/5 transition-colors"
-            onClick={(e) => { e.stopPropagation(); toggleFlip(); }}
-          >
-            <FlipIcon />
-          </button>
+        {/* Score circle - always visible */}
+        <div
+          className="flex items-center justify-center w-6 h-6 rounded-full"
+          style={{
+            background: 'linear-gradient(145deg, #D4AF37, #8B7225)',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.2)',
+          }}
+        >
+          <span className="text-white font-bold text-[10px] leading-none">{scenario.score}</span>
         </div>
       </div>
 
       {/* Body: flipping text area (fills remaining space) */}
-      <div className={`relative flex-1 flex items-center justify-center ${sizeConfig.padding} pb-10`}>
-        {/* Category icon watermark - centered in body */}
+      <div
+        className={`relative flex-1 flex items-center justify-center ${sizeConfig.padding} pb-10`}
+        style={{ background: '#1A120B' }}
+      >
+        {/* Radial glow of category color at 15% opacity */}
         <div
-          className="absolute inset-0 flex items-center justify-center pointer-events-none select-none opacity-[0.06]"
-          style={{ color: catColor }}
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: `radial-gradient(ellipse at center, ${glowColor}26 0%, transparent 70%)`,
+          }}
+        />
+        {/* OM watermark - 5% opacity centered */}
+        <div
+          className="absolute inset-0 flex items-center justify-center pointer-events-none select-none"
+          style={{ color: '#C9A962', opacity: 0.05, fontSize: '6rem', lineHeight: 1 }}
         >
-          <div className="w-32 h-32">
-            <IconComponent />
-          </div>
+          ॐ
         </div>
 
         {/* Flipping text content - 3D flip for center only */}
@@ -257,32 +288,46 @@ export function ScenarioCard({
           </div>
         </div>
 
-        {/* Corner flourishes - positioned within body area */}
-        <div className="absolute top-2 left-2 text-xs" style={{ color: `${catColor}60` }}>✦</div>
-        <div className="absolute top-2 right-2 text-xs" style={{ color: `${catColor}60` }}>✦</div>
-        <div className="absolute bottom-10 left-2 text-xs" style={{ color: `${catColor}60` }}>✦</div>
-        <div className="absolute bottom-10 right-2 text-xs" style={{ color: `${catColor}60` }}>✦</div>
+        {/* Corner flourishes - gold at 30% opacity */}
+        <div className="absolute top-2 left-2 text-xs" style={{ color: 'rgba(201,169,98,0.3)' }}>✦</div>
+        <div className="absolute top-2 right-2 text-xs" style={{ color: 'rgba(201,169,98,0.3)' }}>✦</div>
+        <div className="absolute bottom-10 left-2 text-xs" style={{ color: 'rgba(201,169,98,0.3)' }}>✦</div>
+        <div className="absolute bottom-10 right-2 text-xs" style={{ color: 'rgba(201,169,98,0.3)' }}>✦</div>
       </div>
 
-      {/* Bottom strip: Hindi category label (static) + optional flip hint */}
+      {/* Bottom strip: Card info + flip icon */}
       <div
-        className="shrink-0 flex flex-col items-center justify-center px-4 py-2"
+        className="shrink-0 flex items-center justify-between px-4 py-2"
         style={{
-          background: `linear-gradient(90deg, ${catColor}15, ${catColor}10, ${catColor}15)`,
-          borderTop: `1px solid ${catColor}25`
+          background: 'rgba(201,169,98,0.08)',
+          borderTop: '1px solid rgba(201,169,98,0.15)'
         }}
       >
-        <span
-          className="text-[10px] tracking-widest uppercase"
-          style={{ color: `${catColor}80` }}
-        >
-          {category.hi || scenario.cat}
-        </span>
-        {showFlipHint && (
-          <span className="text-[9px] text-[#F5EFE0]/40 mt-0.5">
-            {showHindi ? "Tap to show English" : "Tap to show Hindi"}
+        <div className="flex items-center gap-2">
+          <span
+            className="text-[10px] tracking-wide"
+            style={{ color: 'rgba(201,169,98,0.6)' }}
+          >
+            {cardNumber && totalCards
+              ? `Card ${cardNumber} of ${totalCards} · ${getDifficulty(scenario.score)}`
+              : getDifficulty(scenario.score)
+            }
           </span>
-        )}
+          {showFlipHint && (
+            <>
+              <span className="text-[10px]" style={{ color: 'rgba(201,169,98,0.3)' }}>·</span>
+              <span className="text-[9px]" style={{ color: 'rgba(245,239,224,0.4)' }}>
+                {showHindi ? "Tap to show English" : "Tap to show Hindi"}
+              </span>
+            </>
+          )}
+        </div>
+        <button
+          className="p-1 rounded hover:bg-white/5 transition-colors"
+          onClick={(e) => { e.stopPropagation(); toggleFlip(); }}
+        >
+          <FlipIcon />
+        </button>
       </div>
     </div>
   );
