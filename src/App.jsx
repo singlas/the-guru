@@ -30,6 +30,7 @@ export default function App() {
   const [rIdx, setRIdx] = useState(0);
   const [winner, setWinner] = useState(null);
   const [gameStats, setGameStats] = useState({ roundsPlayed: 0, catsUsed: [] });
+  const [showCustom, setShowCustom] = useState(false);
   const gOrder = useRef([]);
 
   const startGame = () => {
@@ -330,112 +331,193 @@ export default function App() {
     };
     const scenarioCount = SCENARIOS.filter((s) => cats.has(s.cat)).length;
 
+    // Preset configurations - these start the game immediately
+    const applyPresetAndStart = (presetMode, presetRounds, presetCats) => {
+      const selectedCats = new Set(presetCats);
+      const filteredScenarios = shuffle(SCENARIOS.filter((s) => selectedCats.has(s.cat)));
+      const sw = shuffle([...WISDOM]);
+      let wd = [...sw], wdi = [];
+      const h = players.map(() => {
+        const r = draw(wd, wdi, 5);
+        wd = r.deck;
+        wdi = r.discard;
+        return r.drawn;
+      });
+
+      setMode(presetMode);
+      setRounds(presetRounds);
+      setCats(selectedCats);
+      setSDeck(filteredScenarios);
+      setWDeck(wd);
+      setWDis(wdi);
+      setHands(h);
+      setSkIdx(0);
+      setRNum(1);
+      setSels({});
+      setPhase("roundStart");
+      setCurS(filteredScenarios[0]);
+      gOrder.current = getGurus(0, players.length);
+      setGIdx(0);
+      setGameStats({ roundsPlayed: 0, catsUsed: [...selectedCats] });
+      setScreen("game");
+    };
+
+    const presets = [
+      {
+        key: "quick",
+        label: "Quick Game",
+        desc: "Fast & fun",
+        icon: "⚡",
+        apply: () => applyPresetAndStart(
+          "simple",
+          players.length,
+          ["Personal Dilemmas", "Relationship Situations", "Mind & Emotions", "Family & Parenting"]
+        ),
+      },
+      {
+        key: "kids",
+        label: "Kid Friendly",
+        desc: "Family safe",
+        icon: "🌟",
+        apply: () => applyPresetAndStart(
+          "simple",
+          Math.max(players.length, Math.min(players.length * 2, 8)),
+          ["Personal Dilemmas", "Relationship Situations", "Family & Parenting", "Mind & Emotions"]
+        ),
+      },
+      {
+        key: "deep",
+        label: "Deep",
+        desc: "Contemplative",
+        icon: "🪷",
+        apply: () => applyPresetAndStart(
+          "advanced",
+          players.length * 3,
+          ["Moral/Ethical Decisions", "Spiritual Growth", "Mind & Emotions", "Social Responsibility", "Wealth & Simplicity"]
+        ),
+      },
+    ];
+
     return (
       <div
-        className="min-h-screen p-6 pb-8"
+        className="h-full flex flex-col"
         style={{ background: "linear-gradient(180deg, #1A1412 0%, #2D1F1A 50%, #1A1412 100%)" }}
       >
-        <button
-          onClick={() => setScreen("setup")}
-          className="text-[#C9A962]/60 text-sm hover:text-[#C9A962] transition-colors mb-6"
-        >
-          ← Return
-        </button>
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto p-6 pb-4">
+          <button
+            onClick={() => setScreen("setup")}
+            className="text-[#C9A962]/60 text-sm hover:text-[#C9A962] transition-colors mb-6"
+          >
+            ← Return
+          </button>
 
-        <h2 className="font-display text-2xl text-[#C9A962] mb-6">Sacred Settings</h2>
+          <h2 className="font-display text-2xl text-[#C9A962] mb-2">Choose Your Path</h2>
+          <p className="text-[#F5EFE0]/40 text-sm mb-6">Select a journey type</p>
 
-        {/* Game Mode */}
-        <p className="text-[#E8D5A3] text-sm font-medium mb-3">Path of Scoring</p>
-        <div className="flex gap-3 mb-6">
-          {[
-            { key: "simple", label: "Simple", desc: "1 point each" },
-            { key: "advanced", label: "Advanced", desc: "By depth" },
-          ].map((m) => (
-            <button
-              key={m.key}
-              onClick={() => setMode(m.key)}
-              className={`flex-1 py-4 rounded-xl text-center transition-all ${
-                mode === m.key
-                  ? "bg-[#C9A962]/20 border-[#C9A962] text-[#E8D5A3] border"
-                  : "bg-[#2D1F1A]/40 border-[#C9A962]/20 text-[#F5EFE0]/50 border hover:border-[#C9A962]/40"
-              }`}
-            >
-              <span className="block font-medium">{m.label}</span>
-              <span className="block text-xs opacity-60 mt-1">{m.desc}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Rounds */}
-        <p className="text-[#E8D5A3] text-sm font-medium mb-3">Rounds of Wisdom</p>
-        <div className="flex items-center gap-4 mb-2">
-          <IconButton onClick={() => setRounds(Math.max(players.length, rounds - 1))}>−</IconButton>
-          <div className="text-center flex-1">
-            <span className="font-display text-4xl text-[#C9A962]">{rounds}</span>
-            <p className="text-[#F5EFE0]/40 text-xs mt-1">rounds</p>
-          </div>
-          <IconButton onClick={() => setRounds(Math.min(Math.min(scenarioCount, 30), rounds + 1))}>+</IconButton>
-        </div>
-
-        <div className="flex gap-2 mb-6 justify-center">
-          {[
-            { l: "Swift", v: players.length },
-            { l: "Balanced", v: players.length * 2 },
-            { l: "Deep", v: players.length * 3 },
-          ].map((x) => (
-            <button
-              key={x.l}
-              onClick={() => setRounds(Math.min(scenarioCount, x.v))}
-              className={`px-4 py-2 rounded-full text-xs transition-all ${
-                rounds === x.v
-                  ? "bg-[#C9A962]/20 text-[#E8D5A3] border border-[#C9A962]"
-                  : "bg-[#2D1F1A]/40 text-[#F5EFE0]/40 border border-[#C9A962]/20 hover:border-[#C9A962]/40"
-              }`}
-            >
-              {x.l}
-            </button>
-          ))}
-        </div>
-
-        {/* Categories */}
-        <p className="text-[#E8D5A3] text-sm font-medium mb-3">
-          Life's Domains <span className="text-[#F5EFE0]/40 font-normal">(choose 3+)</span>
-        </p>
-        <div className="space-y-2 mb-6">
-          {CATEGORY_NAMES.map((c) => {
-            const cfg = CATEGORIES[c];
-            const sel = cats.has(c);
-            return (
+          {/* Preset Modes */}
+          <div className="space-y-3 mb-6">
+            {presets.map((p) => (
               <button
-                key={c}
-                onClick={() => tog(c)}
-                className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border text-left transition-all ${
-                  sel
-                    ? "border-[#C9A962]/40 bg-[#2D1F1A]/60"
-                    : "border-[#C9A962]/10 bg-[#2D1F1A]/20 opacity-50"
-                }`}
+                key={p.key}
+                onClick={() => {
+                  p.apply();
+                  setShowCustom(false);
+                }}
+                className="w-full flex items-center gap-4 p-4 rounded-2xl border border-[#C9A962]/20 bg-[#2D1F1A]/40 hover:border-[#C9A962]/40 hover:bg-[#2D1F1A]/60 transition-all text-left active:scale-[0.98]"
               >
-                <span className="text-lg" style={{ color: sel ? cfg.c : "#666" }}>
-                  {cfg.i}
-                </span>
-                <span className={`text-sm ${sel ? "text-[#E8D5A3]" : "text-[#F5EFE0]/40"}`}>
-                  {c}
-                </span>
-                {sel && (
-                  <span className="ml-auto text-xs text-[#C9A962]/60">
-                    {SCENARIOS.filter((s) => s.cat === c).length}
-                  </span>
-                )}
+                <span className="text-2xl">{p.icon}</span>
+                <div className="flex-1">
+                  <span className="block text-[#E8D5A3] font-medium">{p.label}</span>
+                  <span className="block text-[#F5EFE0]/40 text-xs mt-0.5">{p.desc}</span>
+                </div>
+                <span className="text-[#C9A962]/40">→</span>
               </button>
-            );
-          })}
+            ))}
+          </div>
+
+          {/* Custom toggle */}
+          <button
+            onClick={() => setShowCustom(!showCustom)}
+            className="w-full text-center text-[#C9A962]/60 text-sm py-3 hover:text-[#C9A962] transition-colors"
+          >
+            {showCustom ? "Hide custom options ▲" : "Customize settings ▼"}
+          </button>
+
+          {/* Custom Settings */}
+          {showCustom && (
+            <div className="mt-4 pt-4 border-t border-[#C9A962]/10">
+              {/* Game Mode */}
+              <p className="text-[#E8D5A3] text-sm font-medium mb-3">Scoring</p>
+              <div className="flex gap-3 mb-5">
+                {[
+                  { key: "simple", label: "Simple", desc: "1 pt each" },
+                  { key: "advanced", label: "Advanced", desc: "By depth" },
+                ].map((m) => (
+                  <button
+                    key={m.key}
+                    onClick={() => setMode(m.key)}
+                    className={`flex-1 py-3 rounded-xl text-center transition-all ${
+                      mode === m.key
+                        ? "bg-[#C9A962]/20 border-[#C9A962] text-[#E8D5A3] border"
+                        : "bg-[#2D1F1A]/40 border-[#C9A962]/20 text-[#F5EFE0]/50 border"
+                    }`}
+                  >
+                    <span className="block font-medium text-sm">{m.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Rounds */}
+              <p className="text-[#E8D5A3] text-sm font-medium mb-3">Rounds</p>
+              <div className="flex items-center gap-4 mb-5">
+                <IconButton onClick={() => setRounds(Math.max(players.length, rounds - 1))}>−</IconButton>
+                <div className="text-center flex-1">
+                  <span className="font-display text-3xl text-[#C9A962]">{rounds}</span>
+                </div>
+                <IconButton onClick={() => setRounds(Math.min(Math.min(scenarioCount, 30), rounds + 1))}>+</IconButton>
+              </div>
+
+              {/* Categories */}
+              <p className="text-[#E8D5A3] text-sm font-medium mb-3">
+                Categories <span className="text-[#F5EFE0]/30">(3+ required)</span>
+              </p>
+              <div className="space-y-2 mb-4">
+                {CATEGORY_NAMES.map((c) => {
+                  const cfg = CATEGORIES[c];
+                  const sel = cats.has(c);
+                  return (
+                    <button
+                      key={c}
+                      onClick={() => tog(c)}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left transition-all ${
+                        sel
+                          ? "border-[#C9A962]/30 bg-[#2D1F1A]/50"
+                          : "border-[#C9A962]/10 bg-[#2D1F1A]/20 opacity-50"
+                      }`}
+                    >
+                      <span className="text-base" style={{ color: sel ? cfg.c : "#555" }}>
+                        {cfg.i}
+                      </span>
+                      <span className={`text-sm ${sel ? "text-[#E8D5A3]" : "text-[#F5EFE0]/40"}`}>
+                        {c}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <p className="text-center text-[#F5EFE0]/30 text-xs">
+                {scenarioCount} scenarios
+              </p>
+            </div>
+          )}
         </div>
 
-        <p className="text-center text-[#F5EFE0]/30 text-xs mb-4">
-          {scenarioCount} scenarios await
-        </p>
-
-        <Button onClick={startGame}>Enter the GitaVerse</Button>
+        {/* Sticky footer */}
+        <div className="shrink-0 p-6 pt-4 bg-gradient-to-t from-[#1A1412] via-[#1A1412] to-transparent">
+          <Button onClick={startGame}>Enter the GitaVerse</Button>
+        </div>
       </div>
     );
   }
@@ -450,74 +532,77 @@ export default function App() {
     if (phase === "roundStart") {
       return (
         <div
-          className="min-h-screen p-6 flex flex-col"
+          className="h-full flex flex-col"
           style={{ background: "linear-gradient(180deg, #1A1412 0%, #2D1F1A 50%, #1A1412 100%)" }}
         >
-          <div className="flex justify-between items-center mb-6">
-            <span className="text-[#F5EFE0]/40 text-sm">
-              Round {rNum} of {mr}
-            </span>
-            <span className="text-[#C9A962]/60 text-xs px-3 py-1 rounded-full border border-[#C9A962]/20">
-              {mode === "advanced" ? "Advanced" : "Simple"}
-            </span>
-          </div>
+          <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex justify-between items-center mb-6">
+              <span className="text-[#F5EFE0]/40 text-sm">
+                Round {rNum} of {mr}
+              </span>
+              <span className="text-[#C9A962]/60 text-xs px-3 py-1 rounded-full border border-[#C9A962]/20">
+                {mode === "advanced" ? "Advanced" : "Simple"}
+              </span>
+            </div>
 
-          <div className="text-center mb-6">
-            <p className="text-[#F5EFE0]/50 text-sm">The Seeker</p>
-            <p className="font-display text-3xl text-[#C9A962] mt-1">{seeker.name}</p>
-          </div>
+            <div className="text-center mb-6">
+              <p className="text-[#F5EFE0]/50 text-sm">The Seeker</p>
+              <p className="font-display text-3xl text-[#C9A962] mt-1">{seeker.name}</p>
+            </div>
 
-          {/* Scenario Card */}
-          <div
-            className="relative rounded-2xl p-6 mb-6 overflow-hidden"
-            style={{
-              background: `linear-gradient(135deg, ${cfg.c}15 0%, ${cfg.c}08 100%)`,
-              border: `1px solid ${cfg.c}30`,
-            }}
-          >
-            <GeometricPattern pattern={cfg.p} color={cfg.c} opacity={0.15} size={90} />
-            <div className="relative z-10">
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-lg">{cfg.i}</span>
-                <span className="text-xs font-medium tracking-wide" style={{ color: cfg.c }}>
-                  {curS.cat}
-                </span>
-                {mode === "advanced" && (
-                  <span
-                    className="ml-auto px-2.5 py-1 rounded-full text-xs font-medium"
-                    style={{ background: `${cfg.c}30`, color: cfg.c }}
-                  >
-                    {curS.score} {curS.score === 1 ? "point" : "points"}
+            {/* Scenario Card */}
+            <div
+              className="relative rounded-2xl p-6 mb-6 overflow-hidden"
+              style={{
+                background: `linear-gradient(135deg, ${cfg.c}15 0%, ${cfg.c}08 100%)`,
+                border: `1px solid ${cfg.c}30`,
+              }}
+            >
+              <GeometricPattern pattern={cfg.p} color={cfg.c} opacity={0.15} size={90} />
+              <div className="relative z-10">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-lg">{cfg.i}</span>
+                  <span className="text-xs font-medium tracking-wide" style={{ color: cfg.c }}>
+                    {curS.cat}
                   </span>
-                )}
+                  {mode === "advanced" && (
+                    <span
+                      className="ml-auto px-2.5 py-1 rounded-full text-xs font-medium"
+                      style={{ background: `${cfg.c}30`, color: cfg.c }}
+                    >
+                      {curS.score} {curS.score === 1 ? "point" : "points"}
+                    </span>
+                  )}
+                </div>
+                <p className="font-display text-xl text-[#F5EFE0] leading-relaxed">
+                  "{curS.text}"
+                </p>
               </div>
-              <p className="font-display text-xl text-[#F5EFE0] leading-relaxed">
-                "{curS.text}"
-              </p>
+            </div>
+
+            <p className="text-center text-[#C9A962]/50 text-sm italic mb-4 px-4">
+              "O wise gurus, I bring you my dilemma. Share your wisdom."
+            </p>
+
+            {/* Scores */}
+            <div className="flex flex-wrap gap-2 justify-center">
+              {players.map((p, i) => (
+                <div
+                  key={i}
+                  className={`px-3 py-1.5 rounded-full text-xs ${
+                    i === skIdx
+                      ? "bg-[#C9A962]/20 text-[#C9A962] border border-[#C9A962]/40"
+                      : "bg-[#2D1F1A]/60 text-[#F5EFE0]/50"
+                  }`}
+                >
+                  {p.name}: {p.score}
+                </div>
+              ))}
             </div>
           </div>
 
-          <p className="text-center text-[#C9A962]/50 text-sm italic mb-6 px-4">
-            "O wise gurus, I bring you my dilemma. Share your wisdom."
-          </p>
-
-          {/* Scores */}
-          <div className="flex flex-wrap gap-2 mb-6 justify-center">
-            {players.map((p, i) => (
-              <div
-                key={i}
-                className={`px-3 py-1.5 rounded-full text-xs ${
-                  i === skIdx
-                    ? "bg-[#C9A962]/20 text-[#C9A962] border border-[#C9A962]/40"
-                    : "bg-[#2D1F1A]/60 text-[#F5EFE0]/50"
-                }`}
-              >
-                {p.name}: {p.score}
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-auto">
+          {/* Sticky footer */}
+          <div className="shrink-0 p-6 pt-4 bg-gradient-to-t from-[#1A1412] via-[#1A1412] to-transparent">
             <Button onClick={() => setPhase("passing")}>Summon the Gurus</Button>
           </div>
         </div>
@@ -530,14 +615,14 @@ export default function App() {
       const guru = players[gpi];
       return (
         <div
-          className="min-h-screen flex flex-col items-center justify-center p-8"
+          className="h-full flex flex-col items-center justify-center p-8"
           style={{ background: "linear-gradient(180deg, #1A1412 0%, #2D1F1A 50%, #1A1412 100%)" }}
         >
           <div className="animate-breathe mb-8">
             <SacredLotus size={100} />
           </div>
 
-          <p className="text-[#F5EFE0]/50 text-sm mb-2">Pass to</p>
+          <p className="text-[#F5EFE0]/50 text-sm mb-2">Pass the phone to</p>
           <p className="font-display text-4xl text-[#C9A962] mb-2">{guru.name}</p>
           <p className="text-[#F5EFE0]/30 text-sm mb-10">
             Guru {gIdx + 1} of {gOrder.current.length}
@@ -557,45 +642,54 @@ export default function App() {
       const hand = hands[gpi];
       return (
         <div
-          className="min-h-screen p-6"
+          className="h-full flex flex-col"
           style={{ background: "linear-gradient(180deg, #1A1412 0%, #2D1F1A 50%, #1A1412 100%)" }}
         >
-          <div className="flex justify-between items-center mb-4">
-            <span className="text-[#C9A962] font-medium">{guru.name}'s Turn</span>
-            <span className="text-[#F5EFE0]/40 text-sm">Choose wisdom</span>
-          </div>
+          <div className="flex-1 overflow-y-auto p-6">
+            {/* Header */}
+            <div className="text-center mb-4">
+              <p className="text-[#F5EFE0]/50 text-sm">Guru</p>
+              <p className="font-display text-2xl text-[#C9A962]">{guru.name}</p>
+            </div>
 
-          {/* Scenario reminder */}
-          <div
-            className="rounded-xl p-4 mb-5"
-            style={{ background: `${cfg.c}10`, border: `1px solid ${cfg.c}20` }}
-          >
-            <p className="text-xs mb-1" style={{ color: cfg.c }}>
-              {cfg.i} {curS.cat}
-            </p>
-            <p className="text-[#F5EFE0]/80 text-sm">"{curS.text}"</p>
-          </div>
+            {/* Scenario reminder */}
+            <div
+              className="rounded-xl p-4 mb-4"
+              style={{ background: `${cfg.c}10`, border: `1px solid ${cfg.c}20` }}
+            >
+              <p className="text-xs mb-1" style={{ color: cfg.c }}>
+                {cfg.i} The Seeker asks:
+              </p>
+              <p className="text-[#F5EFE0]/80 text-sm">"{curS.text}"</p>
+            </div>
 
-          {/* Wisdom cards */}
-          <div className="space-y-3">
-            {hand.map((card, i) => (
-              <button
-                key={card.id}
-                onClick={() => selectCard(i)}
-                className="w-full text-left relative rounded-2xl p-5 overflow-hidden border border-[#C9A962]/20 active:scale-[0.98] transition-all hover:border-[#C9A962]/40"
-                style={{
-                  background: "linear-gradient(135deg, #2D1F1A 0%, #1A1412 100%)",
-                }}
-              >
-                <WisdomPattern size={50} />
-                <div className="relative z-10 pl-12">
-                  <p className="text-[#C9A962] text-xs font-medium mb-2">
-                    Bhagavad Gita {card.verse}
-                  </p>
-                  <p className="text-[#E8D5A3] text-sm leading-relaxed">"{card.text}"</p>
-                </div>
-              </button>
-            ))}
+            {/* Instruction */}
+            <div className="text-center mb-4">
+              <p className="text-[#C9A962] text-sm font-medium">👆 Tap a wisdom card to select</p>
+              <p className="text-[#F5EFE0]/40 text-xs mt-1">Choose the verse that best answers this dilemma</p>
+            </div>
+
+            {/* Wisdom cards */}
+            <div className="space-y-3">
+              {hand.map((card, i) => (
+                <button
+                  key={card.id}
+                  onClick={() => selectCard(i)}
+                  className="w-full text-left relative rounded-2xl p-4 overflow-hidden border-2 border-[#C9A962]/20 active:scale-[0.98] active:border-[#C9A962] transition-all hover:border-[#C9A962]/50"
+                  style={{
+                    background: "linear-gradient(135deg, #2D1F1A 0%, #1A1412 100%)",
+                  }}
+                >
+                  <WisdomPattern size={45} />
+                  <div className="relative z-10 pl-11">
+                    <p className="text-[#C9A962] text-xs font-medium mb-1.5">
+                      BG {card.verse}
+                    </p>
+                    <p className="text-[#E8D5A3] text-sm leading-relaxed">"{card.text}"</p>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       );
@@ -608,60 +702,64 @@ export default function App() {
       const rc = sels[rgi];
       return (
         <div
-          className="min-h-screen p-6 flex flex-col"
+          className="h-full flex flex-col"
           style={{ background: "linear-gradient(180deg, #1A1412 0%, #2D1F1A 50%, #1A1412 100%)" }}
         >
-          <div className="flex justify-between items-center mb-4">
-            <span className="text-[#F5EFE0]/40 text-sm">Reflection</span>
-            <span className="text-[#F5EFE0]/40 text-sm">
-              {rIdx + 1} of {gOrder.current.length}
-            </span>
-          </div>
-
-          {/* Scenario reminder */}
-          <div
-            className="rounded-xl p-4 mb-6"
-            style={{ background: `${cfg.c}10`, border: `1px solid ${cfg.c}20` }}
-          >
-            <p className="text-[#F5EFE0]/70 text-sm">"{curS.text}"</p>
-          </div>
-
-          <div className="flex-1 flex flex-col items-center justify-center">
-            <p className="text-[#F5EFE0]/50 text-sm mb-2">Guru</p>
-            <p className="font-display text-3xl text-[#C9A962] mb-8">{rg.name}</p>
-
-            {/* Wisdom card display */}
-            <div
-              className="w-full relative rounded-2xl p-6 overflow-hidden border border-[#C9A962]/25"
-              style={{
-                background: "linear-gradient(135deg, #2D1F1A 0%, #1A1412 100%)",
-              }}
-            >
-              <WisdomPattern size={70} />
-              <div className="relative z-10 pl-14">
-                <p className="text-[#C9A962] text-sm font-medium mb-3">
-                  Bhagavad Gita {rc.verse}
-                </p>
-                <p className="font-display text-xl text-[#E8D5A3] leading-relaxed">
-                  "{rc.text}"
-                </p>
-              </div>
+          <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-[#F5EFE0]/40 text-sm">Reflection</span>
+              <span className="text-[#F5EFE0]/40 text-sm">
+                {rIdx + 1} of {gOrder.current.length}
+              </span>
             </div>
 
-            <p className="text-[#C9A962]/40 text-sm italic mt-8 text-center px-4">
-              Share how this wisdom illuminates the path
-            </p>
+            {/* Scenario reminder */}
+            <div
+              className="rounded-xl p-4 mb-6"
+              style={{ background: `${cfg.c}10`, border: `1px solid ${cfg.c}20` }}
+            >
+              <p className="text-[#F5EFE0]/70 text-sm">"{curS.text}"</p>
+            </div>
+
+            <div className="flex flex-col items-center">
+              <p className="text-[#F5EFE0]/50 text-sm mb-2">Guru</p>
+              <p className="font-display text-3xl text-[#C9A962] mb-6">{rg.name}</p>
+
+              {/* Wisdom card display */}
+              <div
+                className="w-full relative rounded-2xl p-5 overflow-hidden border border-[#C9A962]/25"
+                style={{
+                  background: "linear-gradient(135deg, #2D1F1A 0%, #1A1412 100%)",
+                }}
+              >
+                <WisdomPattern size={60} />
+                <div className="relative z-10 pl-12">
+                  <p className="text-[#C9A962] text-sm font-medium mb-2">
+                    BG {rc.verse}
+                  </p>
+                  <p className="font-display text-lg text-[#E8D5A3] leading-relaxed">
+                    "{rc.text}"
+                  </p>
+                </div>
+              </div>
+
+              <p className="text-[#C9A962]/40 text-sm italic mt-6 text-center px-4">
+                {rg.name}, explain how this wisdom answers the dilemma
+              </p>
+            </div>
           </div>
 
-          <Button
-            onClick={() => {
-              if (rIdx < gOrder.current.length - 1) setRIdx((p) => p + 1);
-              else setPhase("seekerPick");
-            }}
-            className="mt-6"
-          >
-            {rIdx < gOrder.current.length - 1 ? "Next Guru" : "Seeker's Choice"}
-          </Button>
+          {/* Sticky footer */}
+          <div className="shrink-0 p-6 pt-4 bg-gradient-to-t from-[#1A1412] via-[#1A1412] to-transparent">
+            <Button
+              onClick={() => {
+                if (rIdx < gOrder.current.length - 1) setRIdx((p) => p + 1);
+                else setPhase("seekerPick");
+              }}
+            >
+              {rIdx < gOrder.current.length - 1 ? "Next Guru" : "Seeker's Choice"}
+            </Button>
+          </div>
         </div>
       );
     }
@@ -670,54 +768,59 @@ export default function App() {
     if (phase === "seekerPick") {
       return (
         <div
-          className="min-h-screen p-6"
+          className="h-full flex flex-col"
           style={{ background: "linear-gradient(180deg, #1A1412 0%, #2D1F1A 50%, #1A1412 100%)" }}
         >
-          <div className="text-center mb-6">
-            <p className="text-[#F5EFE0]/50 text-sm">Seeker's Decision</p>
-            <p className="font-display text-2xl text-[#C9A962] mt-1">
-              {seeker.name}, choose the wisest
+          <div className="flex-1 overflow-y-auto p-6">
+            <div className="text-center mb-4">
+              <p className="text-[#F5EFE0]/50 text-sm">Seeker</p>
+              <p className="font-display text-2xl text-[#C9A962] mt-1">{seeker.name}</p>
+            </div>
+
+            {/* Scenario */}
+            <div
+              className="rounded-xl p-4 mb-4"
+              style={{ background: `${cfg.c}10`, border: `1px solid ${cfg.c}20` }}
+            >
+              <p className="text-[#F5EFE0]/70 text-sm">"{curS.text}"</p>
+              {mode === "advanced" && (
+                <p className="text-xs mt-2" style={{ color: cfg.c }}>
+                  Worth {curS.score} {curS.score === 1 ? "point" : "points"}
+                </p>
+              )}
+            </div>
+
+            {/* Instruction */}
+            <p className="text-center text-[#C9A962] text-sm font-medium mb-4">
+              👆 Tap to award the round
             </p>
-          </div>
 
-          {/* Scenario */}
-          <div
-            className="rounded-xl p-4 mb-6"
-            style={{ background: `${cfg.c}10`, border: `1px solid ${cfg.c}20` }}
-          >
-            <p className="text-[#F5EFE0]/70 text-sm">"{curS.text}"</p>
-            {mode === "advanced" && (
-              <p className="text-xs mt-2" style={{ color: cfg.c }}>
-                Worth {curS.score} {curS.score === 1 ? "point" : "points"}
-              </p>
-            )}
-          </div>
-
-          {/* Guru options */}
-          <div className="space-y-3">
-            {gOrder.current.map((gi) => {
-              const g = players[gi];
-              const card = sels[gi];
-              return (
-                <button
-                  key={gi}
-                  onClick={() => pickWinner(gi)}
-                  className="w-full text-left rounded-2xl p-5 border border-[#C9A962]/15 active:scale-[0.98] active:border-[#C9A962]/50 transition-all hover:border-[#C9A962]/30"
-                  style={{ background: "linear-gradient(135deg, #2D1F1A 0%, #1A1412 100%)" }}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-display bg-[#6B2D3C]/40 text-[#C9A962] border border-[#C9A962]/30 shrink-0">
-                      {g.name[0]}
+            {/* Guru options */}
+            <div className="space-y-3">
+              {gOrder.current.map((gi) => {
+                const g = players[gi];
+                const card = sels[gi];
+                return (
+                  <button
+                    key={gi}
+                    onClick={() => pickWinner(gi)}
+                    className="w-full text-left rounded-2xl p-4 border-2 border-[#C9A962]/15 active:scale-[0.98] active:border-[#C9A962] transition-all hover:border-[#C9A962]/40"
+                    style={{ background: "linear-gradient(135deg, #2D1F1A 0%, #1A1412 100%)" }}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-display bg-[#6B2D3C]/40 text-[#C9A962] border border-[#C9A962]/30 shrink-0">
+                        {g.name[0]}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[#C9A962] font-medium">{g.name}</p>
+                        <p className="text-[#C9A962]/50 text-xs mb-1">BG {card.verse}</p>
+                        <p className="text-[#E8D5A3]/80 text-sm leading-relaxed">"{card.text}"</p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[#C9A962] font-medium">{g.name}</p>
-                      <p className="text-[#C9A962]/50 text-xs mb-2">BG {card.verse}</p>
-                      <p className="text-[#E8D5A3]/80 text-sm leading-relaxed">"{card.text}"</p>
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       );
@@ -729,47 +832,52 @@ export default function App() {
       const pts = mode === "advanced" ? curS.score : 1;
       return (
         <div
-          className="min-h-screen flex flex-col items-center justify-center p-8"
+          className="h-full flex flex-col"
           style={{ background: "linear-gradient(180deg, #1A1412 0%, #2D1F1A 50%, #1A1412 100%)" }}
         >
-          <div className="animate-breathe mb-6">
-            <SacredLotus size={100} />
-          </div>
+          <div className="flex-1 flex flex-col items-center justify-center p-6">
+            <div className="animate-breathe mb-4">
+              <SacredLotus size={90} />
+            </div>
 
-          <p className="text-[#F5EFE0]/50 text-sm mb-2">Wisest Guru</p>
-          <p className="font-display text-4xl text-[#C9A962] mb-2">{wp.name}</p>
-          <p className="text-[#C9A962]/60 text-lg mb-8">
-            +{pts} {pts === 1 ? "point" : "points"}
-          </p>
+            <p className="text-[#F5EFE0]/50 text-sm mb-1">Wisest Guru</p>
+            <p className="font-display text-3xl text-[#C9A962] mb-1">{wp.name}</p>
+            <p className="text-[#C9A962]/60 text-lg mb-6">
+              +{pts} {pts === 1 ? "point" : "points"}
+            </p>
 
-          {/* Standings */}
-          <div className="w-full max-w-xs space-y-2 mb-8">
-            {[...players]
-              .sort((a, b) => b.score - a.score)
-              .map((p) => (
-                <div
-                  key={p.name}
-                  className={`flex items-center justify-between px-4 py-3 rounded-xl ${
-                    p.name === wp.name
-                      ? "bg-[#C9A962]/15 border border-[#C9A962]/30"
-                      : "bg-[#2D1F1A]/50"
-                  }`}
-                >
-                  <span
-                    className={`text-sm ${
-                      p.name === wp.name ? "text-[#C9A962] font-medium" : "text-[#F5EFE0]/60"
+            {/* Standings */}
+            <div className="w-full max-w-xs space-y-2">
+              {[...players]
+                .sort((a, b) => b.score - a.score)
+                .map((p) => (
+                  <div
+                    key={p.name}
+                    className={`flex items-center justify-between px-4 py-2.5 rounded-xl ${
+                      p.name === wp.name
+                        ? "bg-[#C9A962]/15 border border-[#C9A962]/30"
+                        : "bg-[#2D1F1A]/50"
                     }`}
                   >
-                    {p.name}
-                  </span>
-                  <span className="text-[#C9A962] font-display text-lg">{p.score}</span>
-                </div>
-              ))}
+                    <span
+                      className={`text-sm ${
+                        p.name === wp.name ? "text-[#C9A962] font-medium" : "text-[#F5EFE0]/60"
+                      }`}
+                    >
+                      {p.name}
+                    </span>
+                    <span className="text-[#C9A962] font-display text-lg">{p.score}</span>
+                  </div>
+                ))}
+            </div>
           </div>
 
-          <Button onClick={nextRound} className="max-w-xs">
-            {rNum >= (rounds || players.length * 2) ? "Final Wisdom" : "Next Round"}
-          </Button>
+          {/* Sticky footer */}
+          <div className="shrink-0 p-6 pt-4 bg-gradient-to-t from-[#1A1412] via-[#1A1412] to-transparent">
+            <Button onClick={nextRound}>
+              {rNum >= (rounds || players.length * 2) ? "Final Wisdom" : "Next Round"}
+            </Button>
+          </div>
         </div>
       );
     }
@@ -783,7 +891,7 @@ export default function App() {
 
     return (
       <div
-        className="min-h-screen p-6"
+        className="h-full flex flex-col"
         style={{
           background: "radial-gradient(ellipse at center top, #2D1F1A 0%, #1A1412 60%, #1A1412 100%)",
         }}
